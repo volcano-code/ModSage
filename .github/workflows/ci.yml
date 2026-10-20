@@ -1,0 +1,148 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend tests and PostgreSQL
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: modsage_ci
+          POSTGRES_USER: modsage
+          POSTGRES_PASSWORD: ci-local-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U modsage -d modsage_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: apps/api/requirements-dev.lock
+      - name: Install backend
+        run: |
+          python -m pip install --require-hashes -r apps/api/requirements-dev.lock
+          python -m pip install --no-deps -e 'apps/api[dev]'
+      - name: Lint
+        run: |
+          ruff check apps/api scripts
+          ruff format --check apps/api scripts
+      - name: Unit and integration tests
+        run: pytest apps/api/tests --junitxml=artifacts/backend-junit.xml --cov=modsage --cov-report=term-missing --cov-report=xml:artifacts/coverage.xml
+      - name: PostgreSQL smoke
+        env:
+          MODSAGE_DATABASE_URL: postgresql+psycopg://modsage:ci-local-password@127.0.0.1:5432/modsage_ci
+        run: |
+          python -m modsage.cli init-db
+          python scripts/postgres_smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            artifacts/backend-junit.xml
+            artifacts/coverage.xml
+
+  frontend:
+    name: Frontend quality and production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install frontend
+        working-directory: apps/web
+        run: npm ci
+      - name: Lint and type check
+        working-directory: apps/web
+        run: |
+          npm run lint
+          npm run typecheck
+      - name: Production build
+        working-directory: apps/web
+        run: npm run build
+
+  browser:
+    name: Browser integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: apps/api/requirements-dev.lock
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install applications
+        run: |
+          python -m pip install --require-hashes -r apps/api/requirements-dev.lock
+          python -m pip install --no-deps -e 'apps/api[dev]'
+          npm --prefix apps/web ci
+      - name: Install Chromium
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Build frontend
+        working-directory: apps/web
+        run: npm run build
+      - name: Browser tests against real API and isolated database
+        working-directory: apps/web
+        env:
+          MODSAGE_PYTHON: python
+          CI: 'true'
+        run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-results
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+
+  containers:
+    name: Docker Compose startup
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      POSTGRES_PASSWORD: ci-container-password
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate and start the complete stack
+        run: |
+          docker compose config --quiet
+          docker compose up --build --detach --wait --wait-timeout 180
+      - name: Verify frontend-to-API connection
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:3000/api/v1/health
+          curl --fail --silent --show-error --output /dev/null http://127.0.0.1:3000/
+      - name: Container diagnostics
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Clean up isolated stack
+        if: always()
+        run: docker compose down --volumes
