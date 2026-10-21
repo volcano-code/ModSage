@@ -16,6 +16,7 @@ def settings(tmp_path):
         llm_api_key="",
         llm_model="",
         admin_token="",
+        recommendation_worker_enabled=False,
     )
 
 

@@ -1,6 +1,6 @@
 PYTHON ?= .venv/bin/python
 
-.PHONY: setup api web worker worker-once jobs enqueue-refresh embed embedding-status evaluate test lint build init-db discover discover-public digest
+.PHONY: setup api web worker worker-once recommendation-worker recommendation-worker-once jobs enqueue-refresh embed embedding-status evaluate test lint build init-db discover discover-public digest
 
 setup:
 	python3 -m venv .venv
@@ -22,6 +22,12 @@ worker:
 
 worker-once:
 	$(PYTHON) -m modsage.cli worker --once
+
+recommendation-worker:
+	$(PYTHON) -m modsage.cli recommendation-worker
+
+recommendation-worker-once:
+	$(PYTHON) -m modsage.cli recommendation-worker --once
 
 jobs:
 	$(PYTHON) -m modsage.cli jobs --limit 20

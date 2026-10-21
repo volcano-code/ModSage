@@ -11,9 +11,13 @@
 
 上图为 2026-10-21 连接已有真实目录的运行截图；首次克隆仍从空目录开始，通过下方命令自行同步。另见 [移动端](docs/screenshots/home-v3-mobile.jpg)、[帝国场景](docs/screenshots/home-v3-empire.jpg)、[派系入口](docs/screenshots/factions-v3-desktop.jpg)。主视觉使用官方 Steam 商店宣传画和游戏截图；来源、完整性与权利说明见 [官方画面清单](docs/game-media.md)。这些氛围素材与具体 Mod 的 Workshop 预览严格区分。
 
-## 当前版本：v0.3 官方游戏画面与可评测检索
+## 当前版本：v0.4 可恢复推荐任务
 
 首页可切换冰雪与混沌、震旦长垣、帝国艾斯佩斯三组官方画面，并从帝国、震旦、基斯里夫入口直接搜索对应模组。探索、需求推荐与清单页也使用官方场景横幅；猩红军旗、古铜铁框与羊皮纸内容区组成统一的战役档案界面。数据来自实际接口，装饰内容不充当 Mod 证据。
+
+需求推荐已接入数据库任务队列和真实 SSE 事件：提交后显示理解需求、检索目录、核验来源等实际阶段，刷新页面可恢复同一任务，本机保留最近 20 条记录。任务可以取消，失败后在累计次数限制内手动重试；浏览器断开不会取消后台工作。新任务结果以随机访问凭证保护，凭证不放进 URL。这里的恢复是有界任务重执行，不承诺外部模型调用恰好一次，也没有把本机历史称作跨设备账户同步。
+
+实际页面：[桌面任务与官方游戏画面](docs/screenshots/recommend-v4-queued-desktop.jpg)、[真实目录推荐结果](docs/screenshots/recommend-v4-completed-desktop.jpg)、[手机任务进度](docs/screenshots/recommend-v4-completed-mobile.jpg)、[本机推荐历史](docs/screenshots/recommend-v4-history-mobile.jpg)。排队截图通过验收时暂缓启动 worker 获得；恢复执行后返回真实目录结果，没有为截图制作虚假进度。
 
 | 已实现的能力 | 实际边界 |
 | --- | --- |
@@ -22,6 +26,8 @@
 | 内容快照、哈希去重、指标记录、同步任务结果 | 保存真实源数据，失败不会刷新成功同步时间 |
 | 目录、筛选、详情与来源证据 | 首次启动为空，需执行真实同步；没有默认演示 Mod |
 | LangGraph 有界推荐流程与运行记录 | `engine` 区分规则/模型需求解析，`retrieval.method` 单独记录本次实际检索方法 |
+| 持久化推荐任务、后台 worker、SSE 进度与续接 | 数据库原子领取、租约续期和旧 worker 写入隔离；页面刷新恢复同一任务，默认最多执行 3 次 |
+| 本机推荐历史、取消与失败重试 | 最多 20 条浏览器记录；取消以服务器状态为准，历史清除不等同于删除服务端任务 |
 | 中英术语、字段加权 BM25 与匹配证据 | 默认完全本地运行；派系、排除项及必要语言条件先过滤，再召回 |
 | 可选向量索引、精确余弦检索与 RRF 融合 | 需要单独配置服务并手动回填；已做 provider mock 与数据库验证，尚无真实向量质量验收，不是 pgvector/ANN 或神经重排 |
 | 冻结检索评测与 CI 报告 | 42 条真实来源短文本、28 条需求；开发判断标签，不能替代独立人工标注与用户实验 |
@@ -34,7 +40,7 @@
 | SQLite 本地启动、PostgreSQL Compose、CI | 后续仍需真实连续运行、生产部署与规模压测 |
 
 Next.js + React + TypeScript / FastAPI + SQLAlchemy / LangGraph。
-详见 [架构与边界](docs/architecture.md)、[API 契约](docs/API_CONTRACT.md)、[检索配置](docs/retrieval.md)、[冻结评测](docs/retrieval-evaluation.md)、[每日刷新](docs/daily-refresh.md)、[数据实测](docs/data-access-report.md)、[验证记录](docs/verification.md)。
+详见 [架构与边界](docs/architecture.md)、[API 契约](docs/API_CONTRACT.md)、[推荐任务运行说明](docs/recommendation-tasks.md)、[检索配置](docs/retrieval.md)、[冻结评测](docs/retrieval-evaluation.md)、[每日刷新](docs/daily-refresh.md)、[数据实测](docs/data-access-report.md)、[验证记录](docs/verification.md)。
 
 ## 快速启动
 
@@ -62,6 +68,19 @@ npm --prefix apps/web run dev
 网页通过同源 `/api/v1` 白名单代理访问 API，默认上游为 `http://127.0.0.1:8000`；可在 `apps/web/.env.local` 中设置 `API_BASE_URL`。
 
 Python 依赖由 `apps/api/uv.lock` 及导出的带哈希 requirements 锁定，前端使用 `package-lock.json`。开发、CI 和容器使用相同的锁定依赖；升级时统一更新锁文件。
+
+### 推荐任务与后台执行
+
+本地 API 默认启动一个推荐 worker，以上两个终端即可完成推荐。若需要单独运行 worker，在 API 的环境中设置 `MODSAGE_RECOMMENDATION_WORKER_ENABLED=false`，然后启动第三个终端：
+
+```bash
+.venv/bin/python -m modsage.cli recommendation-worker
+
+# 运维检查：最多处理一个任务；空队列返回 idle 并正常退出。
+.venv/bin/python -m modsage.cli recommendation-worker --once
+```
+
+API 与 worker 必须使用同一数据库。Compose 默认以独立 `recommendation-worker` 服务执行推荐，API 不再内嵌 worker。SSE 只读取已持久化事件；断开浏览器、重新加载页面或重启 API 后，可用同一任务凭证续接。队列容量、单请求预算、重试上限和租约恢复语义见 [推荐任务](docs/recommendation-tasks.md)。
 
 ### 导入真实数据
 
@@ -156,7 +175,7 @@ docker compose exec api python -m modsage.cli digest
 docker compose --profile automation up --build -d
 ```
 
-Compose 使用 PostgreSQL，并将所有端口绑定到本机。默认数据库口令仅用于本地开发；公共部署需替换秘密、配置 HTTPS、备份及容量限制。
+Compose 默认启动 PostgreSQL、API、前端和独立推荐 worker，并将所有端口绑定到本机。每日目录刷新 worker 仍通过 `automation` profile 启用。默认数据库口令仅用于本地开发；公共部署需替换秘密、配置 HTTPS、备份及容量限制。
 代码仓库不包含公开托管实例，也不会因为提交代码自动部署线上服务。
 
 ## 验证
@@ -179,7 +198,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-CI 包含后端与冻结评测、真实 PostgreSQL 的并发入队/领取与租约恢复，以及向量 JSON 读写、模型命名空间隔离、幂等回填与过期回退检查；另有前端构建、Chromium 浏览器集成、完整 Docker Compose 和可选 worker 启动检查。CI 不调用真实 Steam 或模型服务。请以 Actions 中具体提交的结果为准。
+CI 包含后端与冻结评测、真实 PostgreSQL 的队列容量约束、并发幂等入队/领取、租约恢复、取消和旧 worker 写入隔离，以及向量 JSON 读写与过期回退检查。浏览器验收包含真实 API 的推荐与 SSE 回放，并单独用显式模拟的传输故障检验断线续接、提交响应丢失和恢复界面。完整 Docker Compose 还通过前端代理提交任务，等待独立 worker 完成并检查 SSE 事件。CI 不调用真实 Steam 或模型服务。请以 Actions 中具体提交的结果为准。
 
 ## 目录
 
@@ -197,7 +216,7 @@ CI 包含后端与冻结评测、真实 PostgreSQL 的并发入队/领取与租�
 1. 配置实际可用的 Steam QueryFiles key，验证认证发现、分页和字段覆盖。
 2. 配置模型并完成中文生成的真实 canary 与人工来源核验。
 3. 扩大独立标注的中文需求集，实测向量/混合检索质量、延迟与成本，再决定 ANN 索引和重排方案。
-4. 将推荐请求扩展为可恢复的后台任务，增加 SSE、用户账户与通知幂等。
+4. 增加用户账户、跨设备任务历史、任务保留与清理策略、通知 Outbox，并引入正式数据库迁移。
 5. 记录连续运行、更新覆盖、失败补偿和实际成本。
 
 ModSage 是独立玩家项目，与 Valve、Creative Assembly 和 Games Workshop 无隶属关系。Mod 内容归其作者及相应权利人所有，保留 Steam 与作者原始链接。

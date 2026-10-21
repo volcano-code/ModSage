@@ -21,7 +21,27 @@ from modsage.jobs import (
     heartbeat_claim,
 )
 from modsage.main import app
-from modsage.models import Mod, ModEmbedding, RecommendationRun
+from modsage.models import (
+    Mod,
+    ModEmbedding,
+    RecommendationEvent,
+    RecommendationJob,
+    RecommendationRun,
+)
+from modsage.recommendation_jobs import (
+    RecommendationJobNotFound,
+    RecommendationLeaseLost,
+    RecommendationQueueFull,
+    cancel_recommendation_job,
+    claim_recommendation_job,
+    enqueue_recommendation_job,
+    finish_recommendation_job,
+    get_recommendation_job,
+    heartbeat_recommendation_claim,
+    recommendation_events,
+    retry_recommendation_job,
+    run_recommendation_worker,
+)
 from modsage.recommendations import recommend
 
 
@@ -77,6 +97,153 @@ def verify_refresh_concurrency(database_url: str) -> None:
     engine.dispose()
     print(
         "PostgreSQL queue smoke passed: duplicate enqueue, concurrent claim, lease recovery, fencing"
+    )
+
+
+async def verify_recommendation_jobs(database_url: str) -> None:
+    """Exercise durable recommendation ownership and recovery on real SQL connections."""
+    engine, factory = make_database(database_url)
+    init_database(engine)
+    settings = Settings(
+        _env_file=None,
+        database_url=database_url,
+        llm_api_key="",
+        embedding_api_key="",
+        retrieval_mode="bm25",
+        recommendation_worker_enabled=False,
+        recommendation_lease_seconds=5,
+        recommendation_max_attempts=3,
+    )
+    ids = []
+    token, key = uuid4().hex + uuid4().hex, uuid4().hex
+    now = datetime.now(timezone.utc) - timedelta(seconds=60)
+    try:
+        # Different submissions race for one queue slot, not just the same unique key.
+        capacity_barrier = Barrier(4)
+        limited = settings.model_copy(update={"recommendation_queue_limit": 1})
+
+        def capacity(index):
+            capability = uuid4().hex + uuid4().hex
+            capacity_barrier.wait(timeout=10)
+            try:
+                job = enqueue_recommendation_job(
+                    factory,
+                    limited,
+                    f"CI capacity fixture {index}",
+                    token=capability,
+                    idempotency_key=uuid4().hex,
+                )
+                return job, capability
+            except RecommendationQueueFull:
+                return None
+
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            admitted = [entry for entry in pool.map(capacity, range(4)) if entry]
+        ids.extend(entry[0]["id"] for entry in admitted)
+        assert len(admitted) == 1, "Concurrent submissions exceeded the queue capacity"
+        cancel_recommendation_job(factory, admitted[0][0]["id"], admitted[0][1])
+
+        barrier = Barrier(4)
+
+        def enqueue(_):
+            barrier.wait(timeout=10)
+            return enqueue_recommendation_job(
+                factory,
+                settings,
+                "CI fixture: 寻找帝国兵种，不要大修",
+                token=token,
+                idempotency_key=key,
+                now=now,
+            )
+
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            submissions = list(pool.map(enqueue, range(4)))
+        job_id = submissions[0]["id"]
+        ids.append(job_id)
+        assert {entry["id"] for entry in submissions} == {job_id}
+        assert len(recommendation_events(factory, job_id, token)) == 1
+        claim_barrier = Barrier(4)
+
+        def claim(index):
+            claim_barrier.wait(timeout=10)
+            return claim_recommendation_job(
+                factory, settings, worker_id=f"ci-recommendation-{index}", now=now
+            )
+
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            claims = [entry for entry in pool.map(claim, range(4)) if entry]
+        assert len(claims) == 1, "Concurrent workers claimed the same recommendation"
+        original = claims[0]
+        later = now + timedelta(seconds=6)
+        recovered = claim_recommendation_job(
+            factory, settings, worker_id="ci-recommendation-recovery", now=later
+        )
+        assert recovered and recovered.job_id == job_id and recovered.token != original.token
+        for stale_operation in (
+            lambda: heartbeat_recommendation_claim(factory, original, 5, now=later),
+            lambda: finish_recommendation_job(factory, original, "failed", now=later),
+        ):
+            try:
+                stale_operation()
+            except RecommendationLeaseLost:
+                pass
+            else:
+                raise AssertionError("A stale worker mutated the recovered task")
+        failed = finish_recommendation_job(factory, recovered, "failed", now=later)
+        assert failed["attempts"] == 2
+        retried = retry_recommendation_job(factory, settings, job_id, token)
+        assert retried["status"] == "queued" and retried["attempts"] == 2
+
+        # An independent engine can pick up and finish the existing persistent job.
+        restarted_engine, restarted_factory = make_database(database_url)
+        try:
+            outcome = await run_recommendation_worker(restarted_factory, settings, once=True)
+            assert outcome["id"] == job_id and outcome["status"] == "completed"
+        finally:
+            restarted_engine.dispose()
+        completed = get_recommendation_job(factory, job_id, token)
+        assert completed["attempts"] == 3
+        assert completed["result"]["retrieval"]["method"] == "bm25"
+        with factory() as session:
+            assert session.get(RecommendationRun, job_id) is None
+        events = recommendation_events(factory, job_id, token)
+        assert [event["id"] for event in events] == list(range(1, completed["last_event_id"] + 1))
+        assert recommendation_events(factory, job_id, token, after=2) == events[2:]
+        try:
+            get_recommendation_job(factory, job_id, uuid4().hex)
+        except RecommendationJobNotFound:
+            pass
+        else:
+            raise AssertionError("A task accepted another browser's capability")
+
+        cancellable = enqueue_recommendation_job(
+            factory, settings, "CI cancellation fixture", token=token, idempotency_key=uuid4().hex
+        )
+        ids.append(cancellable["id"])
+        active = claim_recommendation_job(factory, settings, worker_id="ci-cancel-race")
+        assert active and active.job_id == cancellable["id"]
+        cancelled = cancel_recommendation_job(factory, active.job_id, token)
+        assert cancelled["status"] == "cancelled"
+        try:
+            finish_recommendation_job(
+                factory,
+                active,
+                "completed",
+                result={"run_id": active.job_id, "status": "completed", "items": []},
+            )
+        except RecommendationLeaseLost:
+            pass
+        else:
+            raise AssertionError("A late worker result overwrote cancellation")
+        assert get_recommendation_job(factory, active.job_id, token)["result"] is None
+    finally:
+        with factory.begin() as session:
+            session.execute(delete(RecommendationEvent).where(RecommendationEvent.job_id.in_(ids)))
+            session.execute(delete(RecommendationJob).where(RecommendationJob.id.in_(ids)))
+        engine.dispose()
+    print(
+        "PostgreSQL recommendation smoke passed: admission capacity, idempotency, concurrent claim, "
+        "lease recovery, stale-owner fencing, retry, persistent event replay, protected result, cancel race"
     )
 
 
@@ -170,6 +337,7 @@ def main() -> None:
     if not database_url.startswith("postgresql"):
         raise SystemExit("Set MODSAGE_DATABASE_URL to the isolated PostgreSQL test database")
     verify_refresh_concurrency(database_url)
+    asyncio.run(verify_recommendation_jobs(database_url))
     asyncio.run(verify_embedding_roundtrip(database_url))
     with TestClient(app) as client:
         health = client.get("/api/v1/health")

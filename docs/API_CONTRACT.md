@@ -1,4 +1,4 @@
-# ModSage v0.3 implementation contract
+# ModSage v0.4 implementation contract
 
 Backend: `apps/api/modsage`, FastAPI + SQLAlchemy; Next.js client: `apps/web`.
 All timestamps are UTC ISO-8601. Workshop IDs are strings. Source text is untrusted.
@@ -11,6 +11,10 @@ No synthetic records in the default application. Empty/error states must remain 
 - GET `/api/v1/mods/{id}` -> Mod (with evidence[] and relations[]).
 - POST `/api/v1/recommendations` body `{query: string (2–1000 characters), limit: 5 (1–10)}` -> `{run_id, status, engine, constraints, items: Recommendation[], warnings: string[], retrieval?:RetrievalRun}`. Real LangGraph orchestration; engine `rules` means deterministic requirement interpretation, `llm` means successful model interpretation. Retrieval is tracked separately. The request remains synchronous and bounded. Failed and older saved runs may omit retrieval metadata.
 - GET `/api/v1/runs/{run_id}` -> saved recommendation result, public anonymous run IDs contain no sensitive user profiles in v0.1.
+- POST `/api/v1/recommendation-jobs` body identical to recommendations, headers `X-Recommendation-Token` and `Idempotency-Key` -> HTTP 202 `RecommendationJob`. Durable async route used by the UI. Token-scoped equal keys and bodies return the same job; conflicting bodies return 409; full queue returns 429.
+- GET `/api/v1/recommendation-jobs/{uuid}` -> current `RecommendationJob`, requiring the capability header.
+- GET `/api/v1/recommendation-jobs/{uuid}/events` -> bounded `text/event-stream`; `progress` events contain committed job snapshots, monotonically increasing per-job IDs; replay uses the larger of `Last-Event-ID` and `after`. Invalid cursor -> 422, future cursor -> 409. Heartbeats are comments. The connection closes after the current terminal state is delivered or its duration limit; disconnect does not cancel the job.
+- POST `/api/v1/recommendation-jobs/{uuid}/cancel` and `/retry` -> current/newly queued snapshot; capability required. Cancellation invalidates the execution lease. Retry accepts failed tasks within the original total attempt budget; active repeated retries do not create another attempt.
 - GET `/api/v1/digests/latest` -> `{date, generated_at, source_cutoff, sections: [{key,title,items:Mod[]}], warnings: string[]}`. Empty data -> valid empty response. Daily digest based on stored source timestamps; no claims of full Workshop coverage.
 - POST `/api/v1/modlists/validate` body `{mod_ids:string[]}` -> `{mod_ids, missing_dependencies:[{mod_id,required_id}], known_conflicts:[], unknown_compatibility:string[], warnings:string[]}`. No automatic assumptions about load order.
 - GET `/api/v1/sync/status` -> `{latest_job: RefreshJobSummary|null, last_successful_refresh_at:string|null, schedule:{enabled:boolean,timezone:"Asia/Shanghai",time:string,next_run_at:string|null}, worker:{status:"recently_seen"|"stopped"|"stale"|"unknown",last_seen_at:string|null}}`. Schedule configuration does not establish a running worker. A recent heartbeat is an observation, not a live-process guarantee. Partial/failed jobs do not advance the last full success.
@@ -18,6 +22,14 @@ No synthetic records in the default application. Empty/error states must remain 
 ### RefreshJobSummary
 
 `{id,status,stage,source,attempts,max_attempts,created_at,started_at,completed_at,next_attempt_at,error_code,error_stage,counts:{discovered,imported,enriched}}`. Status is `queued`, `running`, `retry_wait`, `succeeded`, `partial` or `failed`; source is `api` or `public`. Error codes are safe classifications, not arbitrary provider messages. Public responses omit credentials, lease owners, fencing tokens, internal options and idempotency keys. See [daily-refresh.md](daily-refresh.md) for configuration and execution semantics.
+
+### RecommendationJob
+
+`{id,query,limit,status:'queued'|'running'|'completed'|'failed'|'cancelled',stage:'queued'|'understand'|'retrieve'|'verify'|'completed'|'failed'|'cancelled',attempts,max_attempts,created_at,started_at,completed_at,last_event_id,error_code:string|null,result:RecommendationRunResult|null}`. Capability and lease tokens, hashes and idempotency keys are never exposed. Credential syntax is 32–128 URL-safe characters. Missing/malformed capability -> 401; wrong capability or unknown task -> 404. Durable results stay in protected jobs, not in the legacy public `/runs` store, even though `result.run_id` equals the job ID.
+
+Job validation failures use a generic 422 without echoing the query or credentials. Pre-stream storage failures return a sanitized 503 with `Retry-After: 2`; failures after SSE has begun close the transport for reconnect. Queue capacity returns 429 / `Retry-After: 10`, stream capacity 429 / `Retry-After: 2`, and the process-local request guard 429 / `Retry-After: 60`. A 429 during an ambiguous submission replay does not prove that no task was previously created: clients must retain the original capability/key to recover it. Safe execution error codes are `RequestBudgetExceeded`, `WorkerError`, `LeaseExpired`, and `WorkerInterrupted`.
+
+Every state change and corresponding historical event snapshot share a database transaction. Claimed execution is fenced against cancellation and lease recovery. Process interruption can rerun the bounded graph and repeat an external provider call; this is task-level recovery, not exactly-once external execution or LangGraph node checkpointing. See [recommendation-tasks.md](recommendation-tasks.md).
 
 ## Mod object
 `id, title, summary_zh: string|null, description_excerpt: string, author: string|null, source_url, preview_url:string|null, tags:string[], category:string, published_at:string|null, updated_at:string|null, fetched_at:string, subscribers:number|null, favorites:number|null, chinese_support: 'unknown'|'author_claimed'|'translation_available', summary_status:'pending'|'generated'|'source_chinese', compatibility_status:'unknown'|'author_claimed', dependencies_known:boolean, evidence:[{id,field,value,source_url,excerpt,observed_at}], relations:[{kind,target_id,source_url}], source_kind:'steam'`.
@@ -33,7 +45,9 @@ Do not put Workshop HTML template warnings into compatibility status. Summary is
 ## Protected ingestion / CLI
 Admin HTTP endpoints, if added, require a configured non-empty `MODSAGE_ADMIN_TOKEN` and Bearer token. CLI `python -m modsage.cli init-db`, `sync --ids ...`, `discover --limit 50`, `digest`, `enrich --limit ...` operate locally. Real snapshots live in ignored local DB/data, not committed raw author content.
 
-Refresh CLI: `enqueue-refresh [--key ASCII_KEY] [--source api|public]`, `worker [--once]`, `jobs [--limit 20]`. Equal key and options reuse the existing job; conflicting options on an existing key fail. The worker uses the same database as the API. With automatic refresh disabled, `worker --once` handles only previously enqueued work and exits normally on an empty queue. Recommendation requests remain synchronous and bounded; the refresh queue does not change their contract.
+Refresh CLI: `enqueue-refresh [--key ASCII_KEY] [--source api|public]`, `worker [--once]`, `jobs [--limit 20]`. Equal key and options reuse the existing job; conflicting options on an existing key fail. The worker uses the same database as the API. With automatic refresh disabled, `worker --once` handles only previously enqueued work and exits normally on an empty queue. This refresh queue is distinct from the recommendation queue.
+
+Recommendation CLI: `recommendation-worker [--once]` executes persistent jobs with lease recovery. The API starts an embedded worker by default for local development; Compose disables that mode and starts a dedicated service. Existing synchronous recommendation endpoints remain compatible.
 
 Retrieval CLI: `embedding-status` reports configured model, catalog total, bounded scan, current/stale/missing records; `embed --limit 20 --batch-size 8` explicitly requests bounded provider calls (limit 1–200, batch 1–16). Valid current records are skipped. Run manual backfills serially per database; this CLI is not a durable distributed queue. Source/provider/schema changes are handled by fingerprint and namespace validation. No automatic embedding calls occur with the default BM25 recommendation mode.
 

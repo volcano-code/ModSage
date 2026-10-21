@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { api } from "@/lib/api";
+import { useState } from "react";
 import { useRemote } from "@/lib/use-remote";
-import type { Health, Recommendation, RecommendationRun } from "@/lib/types";
+import { useRecommendationJob } from "@/lib/use-recommendation-job";
+import type { Health, Recommendation } from "@/lib/types";
 import { Icon, Mark } from "./icons";
 import { ModCard } from "./mod-card";
 import { CampaignBanner } from "./game-media";
 import { EmptyState, ErrorNotice } from "./ui";
+import { RecommendationHistory, RecommendationJobPanel } from "./recommendation-job-panel";
 
 const examples = ["想玩震旦，增加新兵种，不要大型重做", "找一些改善界面体验的 Mod，最好有中文", "想让帝国战役更有变化，尽量保持原版体验"];
 
@@ -51,51 +52,39 @@ function MatchingEvidence({ item }: { item: Recommendation }) {
 
 export function Recommend() {
   const health = useRemote<Health>("/health");
+  const task = useRecommendationJob();
   const [query, setQuery] = useState("");
-  const [submittedQuery, setSubmittedQuery] = useState("");
-  const [result, setResult] = useState<RecommendationRun | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [cancelled, setCancelled] = useState(false);
-  const controllerRef = useRef<AbortController | null>(null);
-  const lastRequestRef = useRef(0);
+  const inputQuery = task.selected?.query ?? query;
+  const submittedQuery = task.job?.query ?? task.selected?.query ?? "";
+  const result = task.job?.result ?? null;
+  const busy = Boolean(task.operation) || task.job?.status === "queued" || task.job?.status === "running";
+  const unconfirmed = Boolean(task.selected && !task.selected.id);
 
-  useEffect(() => () => controllerRef.current?.abort(), []);
-
-  async function submit(event: React.FormEvent) {
+  function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (query.trim().length < 2 || busy) return;
-    controllerRef.current?.abort();
-    const controller = new AbortController();
-    const requestId = ++lastRequestRef.current;
-    controllerRef.current = controller;
-    setBusy(true); setError(null); setResult(null); setCancelled(false); setSubmittedQuery(query.trim());
-    try {
-      const response = await api<RecommendationRun>("/recommendations", { method: "POST", body: JSON.stringify({ query: query.trim(), limit: 5 }), signal: controller.signal });
-      if (requestId === lastRequestRef.current && !controller.signal.aborted) setResult(response);
-    } catch (failure) {
-      if (requestId === lastRequestRef.current && !controller.signal.aborted) setError(failure instanceof Error ? failure.message : "推荐请求未能完成。");
-    } finally {
-      if (requestId === lastRequestRef.current) setBusy(false);
-    }
+    if (!busy && !unconfirmed && task.ready) task.submit(inputQuery);
   }
 
-  function cancel() {
-    controllerRef.current?.abort();
-    ++lastRequestRef.current;
-    setBusy(false); setCancelled(true);
+  function editQuery(value: string) {
+    if (task.selected) task.newDraft();
+    setQuery(value);
+  }
+
+  function newDraft() {
+    setQuery(inputQuery);
+    task.newDraft();
   }
 
   return <>
     <CampaignBanner scene="khorne" eyebrow="THE WAR COUNCIL · 战役参谋" title="下一场远征，从你的构想开始。" description="告诉参谋你想玩的派系、期待的改变，以及需要避开的内容。"/>
     <div className="recommend-layout"><aside className="recommend-guide"><div className="guide-symbol"><Mark/></div><span className="eyebrow">A LETTER TO YOUR SAGE</span><h2>落笔之前</h2><p>告诉我们你想玩什么，以及不想要什么。</p><ol><li><span>01</span><div><strong>想玩谁？</strong><p>例如帝国、震旦，或你偏爱的派系。</p></div></li><li><span>02</span><div><strong>想改变什么？</strong><p>兵种、战役、界面，或整体体验。</p></div></li><li><span>03</span><div><strong>有什么取舍？</strong><p>不要大修、必须有汉化，或尽量轻量。</p></div></li></ol><div className="guide-bottom"><Icon name="shield"/><p>没有证据的信息会保持未知。推荐不代表已完成游戏内兼容测试。</p></div></aside>
-      <section className="recommend-main"><form className="prompt-panel" onSubmit={submit}><div className="order-heading"><span>CAMPAIGN ORDERS</span><Icon name="swords"/><span>致我的战役参谋</span></div><div className="prompt-topline"><label htmlFor="request-description">你的战役构想</label><span className="mode-badge">{health.data ? health.data.llm_configured ? "模型辅助理解可用" : "目录检索已就绪" : health.error ? "服务暂不可用" : "正在检查服务"}</span></div><textarea id="request-description" value={query} onChange={(event) => setQuery(event.target.value)} maxLength={1000} minLength={2} required placeholder="例如：我主要玩帝国，想增加火炮和兵种内容，不要大型重做，最好有中文。" disabled={busy}/><div className="prompt-footer"><span>{query.length} / 1000<span className="prompt-hint"> · 尽量写清偏好和排除项</span></span><div>{busy && <button type="button" className="button button-quiet" onClick={cancel}>停止等待</button>}<button type="submit" className="button button-gold" disabled={busy || query.trim().length < 2}><Icon name={busy ? "refresh" : "spark"} className={busy ? "spinning" : ""}/>{busy ? "正在生成推荐" : "寻找适合的模组"}{!busy && <Icon name="arrow"/>}</button></div></div></form>
-      <div className="example-prompts"><span>试试这样问</span>{examples.map((example) => <button key={example} disabled={busy} onClick={() => setQuery(example)}>{example}<Icon name="arrow"/></button>)}</div>
+      <section className="recommend-main"><form className="prompt-panel" onSubmit={submit}><div className="order-heading"><span>CAMPAIGN ORDERS</span><Icon name="swords"/><span>致我的战役参谋</span></div><div className="prompt-topline"><label htmlFor="request-description">你的战役构想</label><span className="mode-badge">{health.data ? health.data.llm_configured ? "模型辅助理解可用" : "目录检索已就绪" : health.error ? "服务暂不可用" : "正在检查服务"}</span></div><textarea id="request-description" value={inputQuery} onChange={(event) => editQuery(event.target.value)} maxLength={1000} minLength={2} required placeholder="例如：我主要玩帝国，想增加火炮和兵种内容，不要大型重做，最好有中文。" disabled={busy || unconfirmed || !task.ready}/><div className="prompt-footer"><span>{inputQuery.length} / 1000<span className="prompt-hint"> · 尽量写清偏好和排除项</span></span><div><button type="submit" className="button button-gold" disabled={busy || unconfirmed || !task.ready || inputQuery.trim().length < 2}><Icon name={busy ? "refresh" : "spark"} className={busy ? "spinning" : ""}/>{busy ? task.operation === "submit" ? "正在提交任务" : "推荐任务处理中" : "寻找适合的模组"}{!busy && <Icon name="arrow"/>}</button></div></div></form>
+      {task.selected && <RecommendationJobPanel record={task.selected} job={task.job} connection={task.connection} operation={task.operation} hasError={Boolean(task.error)} onCancel={task.cancel} onRetry={task.retry} onReconnect={task.reconnect} onNew={newDraft}/>}
+      <div className="example-prompts"><span>试试这样问</span>{examples.map((example) => <button key={example} disabled={busy || unconfirmed} onClick={() => editQuery(example)}>{example}<Icon name="arrow"/></button>)}</div>
       {health.data && !health.data.llm_configured && <p className="source-note"><Icon name="book"/>当前使用规则理解你的条件；检索方式与命中依据会随结果展示。</p>}
       {health.error && <ErrorNotice message={health.error} onRetry={health.reload}/>}
-      {error && <ErrorNotice message={error}/>}
-      {cancelled && <div className="notice" role="status"><Icon name="x"/><p>已停止等待本次结果。服务端已经开始的处理可能仍会完成。</p></div>}
-      {busy && <div className="recommend-progress" role="status"><span className="progress-ring"/><div><strong>正在结合你的需求检索与检查</strong><p>结果会在本次请求完成后展示。你可以停止等待。</p></div></div>}
+      {task.error && <ErrorNotice message={task.error}/>}
+      {task.storageWarning && <div className="notice" role="status"><Icon name="alert"/><p>{task.storageWarning}</p></div>}
       {!busy && result && <section className="recommend-results" aria-label="推荐结果"><div className="results-title"><div><span className="eyebrow">YOUR RECOMMENDATIONS</span><h2>{result.status === "failed" ? "这次推荐未能完成" : result.items.length ? `为你找到 ${result.items.length} 个候选` : "暂未找到满足条件的候选"}</h2></div><span className="mode-badge">{result.status === "failed" ? "任务未完成" : result.retrieval?.method === "hybrid_rrf" ? "语义与关键词匹配" : "关键词匹配"}</span></div><p className="submitted-query">“{submittedQuery}”</p>
         {result.retrieval && <details className="retrieval-summary"><summary><Icon name="compass"/>{result.retrieval.method === "hybrid_rrf" ? "结合关键词与语义寻找候选" : "根据标题、标签与作者说明寻找候选"}<Icon name="chevron"/></summary><div><p>先检查派系、排除项与中文要求，再对符合条件的目录内容排序。</p><dl><div><dt>需求理解</dt><dd>{result.engine === "llm" ? "模型辅助" : "规则解析"}</dd></div><div><dt>符合已知条件</dt><dd>{result.retrieval.eligible_count} 项</dd></div><div><dt>检索候选</dt><dd>{result.retrieval.candidate_count} 项</dd></div></dl></div></details>}
         {Object.keys(result.constraints ?? {}).length > 0 && <div className="constraint-list">{Object.entries(result.constraints).filter(([, value]) => value !== null && value !== "" && (!Array.isArray(value) || value.length > 0)).map(([key, value]) => <span key={key}><b>{constraintLabels[key] ?? key}</b>{constraintValue(value, key)}</span>)}</div>}
@@ -103,7 +92,8 @@ export function Recommend() {
         {result.items.length > 0 ? <div className="recommend-list">{result.items.map((item, index) => <article className="recommend-item" key={item.mod.id}><div className="recommend-item-top"><span>推荐候选 <b>{String(index + 1).padStart(2, "0")}</b></span><Link href={`/mods/${item.mod.id}`} className="text-link">查看详情与依据<Icon name="arrow"/></Link></div><div className="recommend-item-content"><ModCard mod={item.mod}/><div className="recommend-reasons"><h3><Icon name="check"/>为什么值得考虑</h3><ul>{item.reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul><MatchingEvidence item={item}/>{item.caveats.length > 0 && <><h3 className="caveat-heading"><Icon name="alert"/>需要留意</h3><ul>{item.caveats.map((caveat, i) => <li key={i}>{caveat}</li>)}</ul></>}<p className="recommend-source">查看作者说明后，再决定是否加入自己的游戏。</p></div></div></article>)}</div> : <EmptyState icon="search" title={result.status === "failed" ? "请稍后重试" : "保持条件，或者试试调整范围"}><p>{result.status === "failed" ? "本次请求没有得到完整结果，可以保留当前条件重新尝试。" : "目录覆盖与事实信息可能有限。你可以减少一项软偏好，再次搜索。"}</p></EmptyState>}
         <p className="run-note">本次记录：{result.run_id}</p>
       </section>}
-      {!busy && !result && !error && !cancelled && <div className="recommend-placeholder"><div className="placeholder-symbol"><Icon name="compass"/></div><span className="eyebrow">YOUR NEXT CAMPAIGN AWAITS</span><h3>战役尚未开始，可能已在眼前。</h3><p>写下你的构想，候选模组与推荐理由将在这里展开。</p></div>}
+      {!busy && !result && !task.error && !task.selected && <div className="recommend-placeholder"><div className="placeholder-symbol"><Icon name="compass"/></div><span className="eyebrow">YOUR NEXT CAMPAIGN AWAITS</span><h3>战役尚未开始，可能已在眼前。</h3><p>写下你的构想，候选模组与推荐理由将在这里展开。</p></div>}
+      <RecommendationHistory records={task.history.items} selectedKey={task.history.selected_key} disabled={Boolean(task.operation)} onSelect={task.select} onForget={task.forget}/>
       </section>
     </div>
   </>;

@@ -28,6 +28,14 @@ services:
       MODSAGE_LLM_BASE_URL: ${MODSAGE_LLM_BASE_URL:-}
       MODSAGE_LLM_MODEL: ${MODSAGE_LLM_MODEL:-}
       MODSAGE_ADMIN_TOKEN: ${MODSAGE_ADMIN_TOKEN:-}
+      # A separate service below processes durable recommendations in Compose.
+      MODSAGE_RECOMMENDATION_WORKER_ENABLED: "false"
+      MODSAGE_RECOMMENDATION_POLL_SECONDS: ${MODSAGE_RECOMMENDATION_POLL_SECONDS:-0.5}
+      MODSAGE_RECOMMENDATION_LEASE_SECONDS: ${MODSAGE_RECOMMENDATION_LEASE_SECONDS:-30}
+      MODSAGE_RECOMMENDATION_MAX_ATTEMPTS: ${MODSAGE_RECOMMENDATION_MAX_ATTEMPTS:-3}
+      MODSAGE_RECOMMENDATION_QUEUE_LIMIT: ${MODSAGE_RECOMMENDATION_QUEUE_LIMIT:-100}
+      MODSAGE_RECOMMENDATION_SSE_SECONDS: ${MODSAGE_RECOMMENDATION_SSE_SECONDS:-25}
+      MODSAGE_RECOMMENDATION_STREAM_LIMIT: ${MODSAGE_RECOMMENDATION_STREAM_LIMIT:-32}
       MODSAGE_RETRIEVAL_MODE: ${MODSAGE_RETRIEVAL_MODE:-bm25}
       MODSAGE_RETRIEVAL_CATALOG_LIMIT: ${MODSAGE_RETRIEVAL_CATALOG_LIMIT:-5000}
       MODSAGE_RETRIEVAL_CANDIDATE_LIMIT: ${MODSAGE_RETRIEVAL_CANDIDATE_LIMIT:-50}
@@ -57,6 +65,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
+
+  recommendation-worker:
+    build:
+      context: ./apps/api
+    command: ["python", "-m", "modsage.cli", "recommendation-worker"]
+    environment: *api-environment
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
   worker:

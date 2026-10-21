@@ -1,8 +1,9 @@
 import asyncio
 import hmac
+import logging
 import time
 from collections import defaultdict, deque
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from typing import Annotated, Literal
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
@@ -17,6 +18,8 @@ from modsage.database import init_database, make_database
 from modsage.digests import build_digest, validate_modlist
 from modsage.jobs import sync_status
 from modsage.models import Mod, RecommendationRun
+from modsage.recommendation_api import register_recommendation_api
+from modsage.recommendation_jobs import run_recommendation_worker
 from modsage.recommendations import recommend
 
 
@@ -45,14 +48,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app):
         init_database(engine)
-        yield
-        engine.dispose()
+        worker = None
+        if settings.recommendation_worker_enabled:
+            worker = asyncio.create_task(run_recommendation_worker(session_factory, settings))
+
+            def report_stop(task):
+                if not task.cancelled() and task.exception() is not None:
+                    logging.getLogger(__name__).error("Recommendation worker stopped unexpectedly")
+
+            worker.add_done_callback(report_stop)
+        try:
+            yield
+        finally:
+            if worker is not None:
+                worker.cancel()
+                with suppress(asyncio.CancelledError, Exception):
+                    await worker
+            engine.dispose()
 
     app = FastAPI(
         title="ModSage API",
         version=__version__,
         lifespan=lifespan,
-        description="真实来源目录与有界推荐；当前推荐接口为同步请求，结果持久化。",
+        description="真实来源目录、有界推荐与持久化后台任务；支持有序进度事件和断线恢复。",
     )
     app.state.settings = settings
     app.state.session_factory = session_factory
@@ -63,7 +81,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=[x.strip() for x in settings.cors_origins.split(",") if x.strip()],
         allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type", "Authorization"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization",
+            "Idempotency-Key",
+            "X-Recommendation-Token",
+            "Last-Event-ID",
+        ],
     )
 
     @app.middleware("http")
@@ -71,7 +95,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        if request.url.path.startswith(("/api/v1/runs", "/api/v1/sync/status")):
+        if request.url.path.startswith(
+            ("/api/v1/runs", "/api/v1/sync/status", "/api/v1/recommendation-jobs")
+        ):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -130,10 +156,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise HTTPException(404, "当前目录未收录此 Mod。")
             return serialize_mod(session, mod)
 
-    @app.post("/api/v1/recommendations")
-    async def recommendations(payload: RecommendationInput, request: Request):
-        if not payload.query.strip():
-            raise HTTPException(422, "描述不能为空。")
+    def check_rate_limit(request):
         now = time.monotonic()
         key = request.client.host if request.client else "unknown"
         # Process-local guard; proxy deployments should also enforce edge rate limiting.
@@ -143,6 +166,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if len(times) >= settings.request_limit_per_minute:
             raise HTTPException(429, "请求较频繁，请稍后再试。", headers={"Retry-After": "60"})
         times.append(now)
+
+    register_recommendation_api(
+        app, session_factory, settings, RecommendationInput, check_rate_limit
+    )
+
+    @app.post("/api/v1/recommendations")
+    async def recommendations(payload: RecommendationInput, request: Request):
+        if not payload.query.strip():
+            raise HTTPException(422, "描述不能为空。")
+        check_rate_limit(request)
         try:
             await asyncio.wait_for(app.state.recommendation_slots.acquire(), timeout=0.2)
         except TimeoutError:

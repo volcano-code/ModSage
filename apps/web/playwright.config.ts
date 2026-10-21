@@ -34,6 +34,8 @@ export default defineConfig({
         MODSAGE_EMBEDDING_MODEL: "",
         MODSAGE_RETRIEVAL_MODE: "bm25",
         MODSAGE_REFRESH_ENABLED: "false",
+        MODSAGE_RECOMMENDATION_WORKER_ENABLED: "true",
+        MODSAGE_RECOMMENDATION_POLL_SECONDS: "0.05",
       },
       url: "http://127.0.0.1:8100/api/v1/health",
       timeout: 60_000,

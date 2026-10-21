@@ -21,28 +21,42 @@ test("catalogue searches real API, preserves unknown facts, and links to the sou
   await expect(page.locator(".fact-list > div").filter({ hasText: "版本兼容性" })).toContainText("尚未确认");
 });
 
-test("bounded recommendation excludes overhaul and its run is persisted", async ({ page, request }) => {
+test("durable recommendation excludes overhaul and restores its protected result after reload", async ({ page, request }) => {
+  const query = "想玩帝国，增加火炮和兵种，不要大修";
   await page.goto("/recommend");
-  await page.getByLabel("你的战役构想").fill("想玩帝国，增加火炮和兵种，不要大修");
+  await page.getByLabel("你的战役构想").fill(query);
   const responsePromise = page.waitForResponse((response) =>
-    response.url().endsWith("/api/v1/recommendations") && response.request().method() === "POST"
+    response.url().endsWith("/api/v1/recommendation-jobs") && response.request().method() === "POST"
   );
   await page.getByRole("button", { name: "寻找适合的模组" }).click();
   const response = await responsePromise;
-  expect(response.ok()).toBeTruthy();
-  const run = await response.json();
+  expect(response.status()).toBe(202);
+  const created = await response.json();
+  const token = response.request().headers()["x-recommendation-token"];
+  expect(token).toMatch(/^[A-Za-z0-9_-]{32,128}$/);
+  expect(response.url()).not.toContain(token);
+  const result = page.getByRole("region", { name: "推荐结果" });
+  await expect(result.getByRole("link", { name: empireTitle, exact: true })).toBeVisible();
+  const savedJob = await request.get(`/api/v1/recommendation-jobs/${created.id}`, {
+    headers: { "X-Recommendation-Token": token },
+  });
+  expect(savedJob.ok()).toBeTruthy();
+  const job = await savedJob.json();
+  expect(job.status).toBe("completed");
+  const run = job.result;
   expect(run.engine).toBe("rules");
   expect(run.status).toBe("completed");
   expect(run.retrieval).toMatchObject({ method: "bm25", requested_method: "bm25" });
   expect(run.items.map((item: { mod: { id: string } }) => item.mod.id)).toEqual([empireId]);
   expect(run.items[0].retrieval.channels).toEqual(["lexical"]);
   expect(run.items[0].retrieval.matched_terms.length).toBeGreaterThan(0);
-  const result = page.getByRole("region", { name: "推荐结果" });
-  await expect(result.getByRole("link", { name: empireTitle, exact: true })).toBeVisible();
   await expect(result.getByRole("link", { name: overhaulTitle, exact: true })).toHaveCount(0);
-  const savedRun = await request.get(`/api/v1/runs/${run.run_id}`);
-  expect(savedRun.ok()).toBeTruthy();
-  expect((await savedRun.json()).run_id).toBe(run.run_id);
+  expect((await request.get(`/api/v1/runs/${run.run_id}`)).status()).toBe(404);
+  await page.reload();
+  await expect(page.getByLabel("你的战役构想")).toHaveValue(query);
+  await expect(result.getByRole("link", { name: empireTitle, exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "本机推荐记录" })
+    .getByRole("button", { name: `查看推荐记录：${query}`, exact: true })).toBeVisible();
 });
 
 test("official game scenes load, switch with source credits, and lead to faction results", async ({ page }) => {

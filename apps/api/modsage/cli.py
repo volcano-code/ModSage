@@ -12,6 +12,7 @@ from modsage.embeddings import backfill_embeddings, embedding_status
 from modsage.enrichment import enrich_mods
 from modsage.ingestion import sync_ids
 from modsage.jobs import enqueue_refresh, list_jobs, run_worker, sync_status
+from modsage.recommendation_jobs import run_recommendation_worker
 
 
 def parse_ids(values):
@@ -24,6 +25,8 @@ def parse_ids(values):
 
 
 async def execute(args, settings, session_factory):
+    if args.command == "recommendation-worker":
+        return await run_recommendation_worker(session_factory, settings, once=args.once)
     if args.command == "embedding-status":
         return embedding_status(session_factory, settings)
     if args.command == "embed":
@@ -85,6 +88,12 @@ async def execute(args, settings, session_factory):
 def main():
     parser = argparse.ArgumentParser(description="ModSage source and knowledge operations")
     subs = parser.add_subparsers(dest="command", required=True)
+    recommendation_worker = subs.add_parser(
+        "recommendation-worker", help="Run durable recommendation jobs with lease recovery"
+    )
+    recommendation_worker.add_argument(
+        "--once", action="store_true", help="Process at most one queued or expired job, then exit"
+    )
     subs.add_parser(
         "embedding-status", help="Inspect current provider/model source-aware vector coverage"
     )
@@ -137,6 +146,7 @@ def main():
     settings = get_settings()
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     logging.getLogger("modsage.jobs").setLevel(logging.INFO)
+    logging.getLogger("modsage.recommendation_jobs").setLevel(logging.INFO)
     engine, session_factory = make_database(settings.database_url)
     init_database(engine)
     try:

@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     llm_timeout_seconds: float = Field(default=15.0, ge=1, le=25)
     recommendation_timeout_seconds: float = Field(default=25.0, ge=1, le=60)
+    recommendation_worker_enabled: bool = True
+    recommendation_poll_seconds: float = Field(default=0.5, ge=0.05, le=10)
+    recommendation_lease_seconds: int = Field(default=30, ge=5, le=120)
+    recommendation_max_attempts: int = Field(default=3, ge=1, le=5)
+    recommendation_queue_limit: int = Field(default=100, ge=1, le=1000)
+    recommendation_sse_seconds: float = Field(default=25.0, ge=1, le=30)
+    recommendation_stream_limit: int = Field(default=32, ge=1, le=200)
     request_limit_per_minute: int = Field(default=20, ge=1, le=1000)
     retrieval_mode: Literal["bm25", "hybrid"] = "bm25"
     retrieval_catalog_limit: int = Field(default=5000, ge=100, le=10000)

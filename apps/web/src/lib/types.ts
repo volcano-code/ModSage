@@ -121,6 +121,24 @@ export interface RecommendationRun {
   };
 }
 
+export type RecommendationJobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
+
+export interface RecommendationJob {
+  id: string;
+  query: string;
+  limit: number;
+  status: RecommendationJobStatus;
+  stage: "queued" | "understand" | "retrieve" | "verify" | "completed" | "failed" | "cancelled";
+  attempts: number;
+  max_attempts: number;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  last_event_id: number;
+  error_code: string | null;
+  result: RecommendationRun | null;
+}
+
 export interface Validation {
   mod_ids: string[];
   missing_dependencies: { mod_id: string; required_id: string }[];

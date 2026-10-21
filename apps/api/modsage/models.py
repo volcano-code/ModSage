@@ -103,6 +103,50 @@ class RecommendationRun(Base):
     result: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
+class RecommendationJob(Base):
+    """A capability-protected request, with a fenced durable execution lease."""
+
+    __tablename__ = "recommendation_jobs"
+    __table_args__ = (UniqueConstraint("token_hash", "idempotency_key"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64))
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    query: Mapped[str] = mapped_column(Text)
+    limit: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(24), default="queued", index=True)
+    stage: Mapped[str] = mapped_column(String(24), default="queued")
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    max_attempts: Mapped[int] = mapped_column(Integer)
+    request_timeout_seconds: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    lease_token: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_event_id: Mapped[int] = mapped_column(Integer, default=0)
+    error_code: Mapped[str | None] = mapped_column(String(48), nullable=True)
+    result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+
+class RecommendationEvent(Base):
+    """Committed snapshots, ordered within their job; independent of SSE connections."""
+
+    __tablename__ = "recommendation_events"
+    job_id: Mapped[str] = mapped_column(ForeignKey("recommendation_jobs.id"), primary_key=True)
+    sequence: Mapped[int] = mapped_column(Integer, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    data: Mapped[dict] = mapped_column(JSON)
+
+
+class RecommendationAdmission(Base):
+    """A short write lock serializes bounded queue admission on SQLite and PostgreSQL."""
+
+    __tablename__ = "recommendation_admission"
+    name: Mapped[str] = mapped_column(String(24), primary_key=True)
+    touched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class Digest(Base):
     __tablename__ = "digests"
     date: Mapped[str] = mapped_column(String(10), primary_key=True)

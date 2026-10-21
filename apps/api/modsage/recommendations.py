@@ -209,10 +209,12 @@ class State(TypedDict, total=False):
     fingerprints: dict[str, str]
 
 
-def build_graph(session_factory, settings, model=None, embedding_client=None):
+def build_graph(session_factory, settings, model=None, embedding_client=None, on_stage=None):
     model = model or ModelClient(settings)
 
     async def understand(state: State):
+        if on_stage is not None:
+            await on_stage("understand")
         constraints = parse_rules(state["query"])
         warnings = []
         engine = "rules"
@@ -254,6 +256,8 @@ def build_graph(session_factory, settings, model=None, embedding_client=None):
         return {"constraints": constraints.model_dump(), "engine": engine, "warnings": warnings}
 
     async def retrieve(state: State):
+        if on_stage is not None:
+            await on_stage("retrieve")
         constraints = Constraints.model_validate(state["constraints"])
         query = state["query"] + " " + " ".join(constraints.keywords)
         warnings = list(state["warnings"])
@@ -409,6 +413,9 @@ def build_graph(session_factory, settings, model=None, embedding_client=None):
         }
 
     async def verify(state: State):
+        if on_stage is not None:
+            await on_stage("verify")
+
         # Last boundary: known source IDs, current source text, and all hard constraints.
         def check():
             constraints = Constraints.model_validate(state["constraints"])
@@ -441,6 +448,35 @@ def build_graph(session_factory, settings, model=None, embedding_client=None):
     return graph.compile()
 
 
+async def execute_recommendation(
+    session_factory,
+    settings,
+    query: str,
+    limit: int,
+    *,
+    run_id: str,
+    model=None,
+    embedding_client=None,
+    on_stage=None,
+) -> dict:
+    """Execute without publishing a run; durable workers finalize under their own fence."""
+    state = await asyncio.wait_for(
+        build_graph(session_factory, settings, model, embedding_client, on_stage).ainvoke(
+            {"query": query, "limit": limit}, config={"recursion_limit": 8}
+        ),
+        timeout=settings.recommendation_timeout_seconds,
+    )
+    return {
+        "run_id": run_id,
+        "status": "completed",
+        "engine": state["engine"],
+        "constraints": state["constraints"],
+        "items": state["items"],
+        "warnings": state["warnings"],
+        "retrieval": state["retrieval"],
+    }
+
+
 async def recommend(
     session_factory, settings, query: str, limit: int, model=None, embedding_client=None
 ) -> dict:
@@ -448,21 +484,15 @@ async def recommend(
     with session_factory.begin() as session:
         session.add(RecommendationRun(id=run_id, status="running", result={}))
     try:
-        state = await asyncio.wait_for(
-            build_graph(session_factory, settings, model, embedding_client).ainvoke(
-                {"query": query, "limit": limit}, config={"recursion_limit": 8}
-            ),
-            timeout=settings.recommendation_timeout_seconds,
+        result = await execute_recommendation(
+            session_factory,
+            settings,
+            query,
+            limit,
+            run_id=run_id,
+            model=model,
+            embedding_client=embedding_client,
         )
-        result = {
-            "run_id": run_id,
-            "status": "completed",
-            "engine": state["engine"],
-            "constraints": state["constraints"],
-            "items": state["items"],
-            "warnings": state["warnings"],
-            "retrieval": state["retrieval"],
-        }
     except TimeoutError:
         result = {
             "run_id": run_id,

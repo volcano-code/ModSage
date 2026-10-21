@@ -1,10 +1,10 @@
 # Architecture and delivery boundaries
 
-## v0.3
+## v0.4
 
 One FastAPI codebase owns catalog, source snapshots, structured facts, recommendation runs, refresh jobs and digest editions. Next.js renders the Chinese UI and proxies only an explicit public API allowlist. A CLI performs controlled ingestion and enrichment; a separate worker executes durable catalog refreshes. SQLite supports a minimal local setup; PostgreSQL is the deployment target in Compose.
 
-The recommendation path is a bounded synchronous LangGraph workflow with persisted input, constraints and output. `engine=rules` means deterministic query interpretation; `engine=llm` means successful model interpretation. The separate `retrieval.method` records the actual BM25 or hybrid RRF path. An LLM and an embedding model are independently configured capabilities; neither configuration alone establishes execution. Missing credentials do not lead to fabricated model results.
+The recommendation graph remains bounded. The UI now submits durable asynchronous jobs; the legacy synchronous endpoint stays compatible. `engine=rules` means deterministic query interpretation; `engine=llm` means successful model interpretation. The separate `retrieval.method` records the actual BM25 or hybrid RRF path. An LLM and an embedding model are independently configured capabilities; neither configuration alone establishes execution. Missing credentials do not lead to fabricated model results.
 
 Raw metadata snapshots and generated Chinese descriptions are different records. A SHA-256 hash identifies normalized content; fetching unchanged content must not duplicate a revision. Metric snapshots remain separate from content updates. API responses preserve `unknown` values for unsupported claims.
 
@@ -28,10 +28,18 @@ Provider calls occur outside database transactions. Stage results and their data
 
 The lease serializes these refresh workers, not every possible manual CLI or external database writer. Avoid launching manual ingestion against the same catalog while a refresh is active. This release adds new tables through the existing initialization path without altering existing columns; schema migrations remain a future requirement. Operational commands and configuration are in [daily-refresh.md](daily-refresh.md).
 
+## Durable recommendation execution
+
+`recommendation_jobs` stores input, token hash, token-scoped idempotency key, total attempt budget, lease and result. `recommendation_events` stores monotonically numbered snapshots; state and events commit atomically. A short database admission lock coordinates active queue capacity. Workers claim through atomic conditional updates, with PostgreSQL row locking and `SKIP LOCKED`; every stage, heartbeat and completion checks the claim token and lease expiry. Cancellation invalidates the claim so an old worker cannot publish a late result.
+
+Provider calls occur outside database transactions. A recovered attempt reruns the bounded graph, so a crash may repeat an external call; this is not a LangGraph checkpointer or exactly-once external execution. Normal failures need explicit retry within the task's original attempt budget. Graceful shutdown releases recoverable work; a killed process is handled through lease expiry.
+
+The public proxy forwards only explicit job routes and capability/replay headers. Protected SSE reads persisted events and supports a bounded connection with cursor replay; it does not buffer a full response or expose tokens in URLs. The browser keeps a bounded local history and restores the selected job. New durable results never enter the legacy public run store. Local API startup includes an embedded worker; Compose runs the same worker loop as a separate service. Operational details and limits are in [recommendation-tasks.md](recommendation-tasks.md).
+
 ## Planned next increments
 
 1. Expand independently judged multilingual retrieval data, measure a real embedding provider against the frozen baseline, and select scalable indexing/reranking only after quality and cost measurements.
-2. Move long-running runs to durable workers, add numbered SSE events, cancel/retry and transactionally persisted Outbox events.
+2. Add account-scoped history, task retention/deletion and transactionally persisted Outbox notifications; introduce node checkpointing if measured workflows need it.
 3. Add authenticated, server-side personal lists and preferences. Browser-local favorites in the initial UI are not cross-device account storage.
 4. Add evidence-backed relation extraction and editor review; avoid equating dependency closure with a proven load order.
 5. Add per-user notifications with deduplication and accumulate real multi-day operational history for the implemented scheduler.

@@ -53,6 +53,7 @@ jobs:
       - name: PostgreSQL smoke
         env:
           MODSAGE_DATABASE_URL: postgresql+psycopg://modsage:ci-local-password@127.0.0.1:5432/modsage_ci
+          MODSAGE_RECOMMENDATION_WORKER_ENABLED: 'false'
         run: |
           python -m modsage.cli init-db
           python scripts/postgres_smoke.py
@@ -144,6 +145,8 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:3000/api/v1/health
           curl --fail --silent --show-error http://127.0.0.1:3000/api/v1/sync/status
           curl --fail --silent --show-error --output /dev/null http://127.0.0.1:3000/
+      - name: Verify durable recommendation worker and SSE proxy
+        run: python3 scripts/recommendation_job_smoke.py --base-url http://127.0.0.1:3000
       - name: Start optional worker without external discovery
         run: |
           docker compose --profile automation run --build --rm --no-deps -e MODSAGE_REFRESH_ENABLED=false worker python -m modsage.cli worker --once
