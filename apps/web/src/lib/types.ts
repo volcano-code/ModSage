@@ -60,6 +60,27 @@ export interface Health {
   steam_discovery_configured: boolean;
 }
 
+export interface SyncStatus {
+  latest_job: {
+    id: string;
+    status: "queued" | "running" | "retry_wait" | "succeeded" | "partial" | "failed";
+    stage: string;
+    source: string;
+    attempts: number;
+    max_attempts: number;
+    created_at: string;
+    started_at: string | null;
+    completed_at: string | null;
+    next_attempt_at: string | null;
+    error_code: string | null;
+    error_stage: string | null;
+    counts: { discovered: number; imported: number; enriched: number };
+  } | null;
+  last_successful_refresh_at: string | null;
+  schedule: { enabled: boolean; timezone: string; time: string; next_run_at: string | null };
+  worker: { status: "recently_seen" | "stopped" | "stale" | "unknown"; last_seen_at: string | null };
+}
+
 export interface Digest {
   date: string;
   generated_at: string;

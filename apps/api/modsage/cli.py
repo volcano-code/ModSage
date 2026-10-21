@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import json
+import logging
 import re
 import sys
 
@@ -9,6 +10,7 @@ from modsage.database import init_database, make_database
 from modsage.digests import build_digest
 from modsage.enrichment import enrich_mods
 from modsage.ingestion import sync_ids
+from modsage.jobs import enqueue_refresh, list_jobs, run_worker, sync_status
 
 
 def parse_ids(values):
@@ -22,7 +24,20 @@ def parse_ids(values):
 
 async def execute(args, settings, session_factory):
     if args.command == "init-db":
-        return {"status": "ready", "schema_version": "0.1.0"}
+        from modsage import __version__
+
+        return {"status": "ready", "schema_version": __version__}
+    if args.command == "enqueue-refresh":
+        return enqueue_refresh(
+            session_factory, settings, idempotency_key=args.key, source=args.source
+        )
+    if args.command == "worker":
+        return await run_worker(session_factory, settings, once=args.once)
+    if args.command == "jobs":
+        return {
+            "items": list_jobs(session_factory, args.limit),
+            "sync": sync_status(session_factory, settings),
+        }
     if args.command == "digest":
         with session_factory.begin() as session:
             return build_digest(session, refresh=args.refresh)
@@ -63,7 +78,26 @@ async def execute(args, settings, session_factory):
 def main():
     parser = argparse.ArgumentParser(description="ModSage source and knowledge operations")
     subs = parser.add_subparsers(dest="command", required=True)
-    subs.add_parser("init-db", help="Initialize v0.1 database schema")
+    subs.add_parser(
+        "init-db", help="Initialize the database, including additive refresh-job tables"
+    )
+    enqueue = subs.add_parser("enqueue-refresh", help="Queue one persistent daily-style refresh")
+    enqueue.add_argument(
+        "--key", help="Reuse an idempotency key to return the same job; default: a new UUID"
+    )
+    enqueue.add_argument(
+        "--source", choices=["api", "public"], help="Override MODSAGE_REFRESH_SOURCE for this task"
+    )
+    worker = subs.add_parser(
+        "worker", help="Run the lease-based refresh worker and optional daily scheduler"
+    )
+    worker.add_argument(
+        "--once",
+        action="store_true",
+        help="Enqueue today's due task if enabled, then process at most one task",
+    )
+    jobs = subs.add_parser("jobs", help="Show bounded job history and scheduling/worker status")
+    jobs.add_argument("--limit", type=int, default=20, choices=range(1, 101), metavar="1..100")
     sync = subs.add_parser("sync", help="Fetch and import explicit Workshop IDs")
     sync.add_argument("--ids", nargs="+", required=True)
     collection = subs.add_parser("collection", help="Import a public collection by ID")
@@ -86,12 +120,19 @@ def main():
     if args.command == "discover" and args.public and args.limit > 100:
         parser.error("Public discovery is bounded to at most 100 entries per operation.")
     settings = get_settings()
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
+    logging.getLogger("modsage.jobs").setLevel(logging.INFO)
     engine, session_factory = make_database(settings.database_url)
     init_database(engine)
     try:
         result = asyncio.run(execute(args, settings, session_factory))
         print(json.dumps(result, ensure_ascii=False, indent=2))
-        if result.get("errors"):
+        if result.get("errors") or result.get("status") in {
+            "partial",
+            "failed",
+            "retry_wait",
+            "lease_lost",
+        }:
             return 1
         return 0
     except Exception as exc:

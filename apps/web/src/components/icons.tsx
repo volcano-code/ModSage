@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-export type IconName = "compass" | "arrow" | "search" | "spark" | "bookmark" | "external" | "clock" | "layers" | "check" | "alert" | "refresh" | "x" | "download" | "shield" | "chevron" | "book";
+export type IconName = "compass" | "arrow" | "search" | "spark" | "bookmark" | "external" | "clock" | "layers" | "check" | "alert" | "refresh" | "x" | "download" | "shield" | "chevron" | "book" | "swords" | "crown" | "scroll";
 
 const paths: Record<IconName, React.ReactNode> = {
   compass: <><circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5L16 8Z"/></>,
@@ -19,6 +19,9 @@ const paths: Record<IconName, React.ReactNode> = {
   shield: <><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></>,
   chevron: <path d="m9 5 7 7-7 7"/>,
   book: <><path d="M12 6v15M3 4c5 0 7 1 9 3 2-2 4-3 9-3v15c-5 0-7 0-9 2-2-2-4-2-9-2V4Z"/></>,
+  swords: <><path d="m4 3 5 2 11 13-2 2L5 9 4 3Zm16 0-5 2-4 5m-1 3-5 5 2 2 5-5M3 16l5 5m8-18-1 6M3 21l3-3m12 0 3 3m-5-2 5-5"/></>,
+  crown: <><path d="m3 6 5 4 4-6 4 6 5-4-3 12H6L3 6Zm3 15h12M6 15h12"/><path d="M12 2v1"/></>,
+  scroll: <><path d="M6 3h13a2 2 0 0 1 2 2v3h-4V5a2 2 0 0 1 2-2M6 3a3 3 0 0 0-3 3v12m3-15a3 3 0 0 1 3 3v12m-6 0h12v1a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-1m12-4h2V8M12 8h2m-2 4h2"/></>,
 };
 
 export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {
@@ -26,5 +29,11 @@ export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: IconN
 }
 
 export function Mark({ className = "" }: { className?: string }) {
-  return <svg viewBox="0 0 80 80" fill="none" aria-hidden="true" className={className}><path d="M40 7 69 24v32L40 73 11 56V24L40 7Z" stroke="currentColor" strokeWidth="2"/><path d="M24 53V28l16 14 16-14v25M40 42v18" stroke="currentColor" strokeWidth="3" strokeLinejoin="round"/></svg>;
+  return <svg viewBox="0 0 100 100" fill="none" aria-hidden="true" className={className}>
+    <g fill="currentColor"><path d="M33 38 8 14l3 18 18 16-21-9 6 15 17 8-16-3 7 12 13 1 4-28-6-6Zm34 0 25-24-3 18-18 16 21-9-6 15-17 8 16-3-7 12-13 1-4-28 6-6Z"/><path d="m50 3 3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8Z"/></g>
+    <path d="m50 26 20 8-3 28c-1 13-17 25-17 25S34 75 33 62l-3-28 20-8Z" fill="#231a16" stroke="currentColor" strokeWidth="2.5"/>
+    <path d="m50 32 14 6-2 23c-1 8-12 19-12 19S39 69 38 61l-2-23 14-6Z" stroke="currentColor" strokeWidth=".8"/>
+    <path d="M47 45h6v26h-6zM39 41h22v10H39z" fill="currentColor"/><path d="M39 40v12m22-12v12M45 71h10" stroke="currentColor" strokeWidth="2.5"/>
+    <path d="m24 78 10 2m42-2-10 2M37 88l13 7 13-7" stroke="currentColor" strokeWidth="1.5"/>
+  </svg>;
 }

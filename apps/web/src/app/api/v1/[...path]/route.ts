@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const getPaths = [
-  /^health$/, /^stats$/, /^mods$/, /^mods\/\d{1,20}$/, /^digests\/latest$/,
+  /^health$/, /^stats$/, /^mods$/, /^mods\/\d{1,20}$/, /^digests\/latest$/, /^sync\/status$/,
   /^runs\/[a-zA-Z0-9_-]{1,100}$/,
 ];
 const postPaths = [/^recommendations$/, /^modlists\/validate$/];

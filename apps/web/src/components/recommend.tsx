@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { useRemote } from "@/lib/use-remote";
 import type { Health, RecommendationRun } from "@/lib/types";
-import { Icon } from "./icons";
+import { Icon, Mark } from "./icons";
 import { ModCard } from "./mod-card";
 import { EmptyState, ErrorNotice } from "./ui";
 
@@ -74,11 +74,11 @@ export function Recommend() {
   }
 
   return <>
-    <div className="page-heading"><span className="eyebrow">YOUR CAMPAIGN, YOUR WAY</span><h1>说说你想玩的体验。</h1><p>你负责描绘想法，参谋负责在收录目录中寻找线索。排除项、前置和未知信息都会保留下来。</p></div>
-    <div className="recommend-layout"><aside className="recommend-guide"><div className="guide-symbol"><Icon name="spark"/></div><h2>从一句话开始</h2><p>告诉我们你想玩什么，以及不想要什么。</p><ol><li><span>01</span><div><strong>想玩谁？</strong><p>例如帝国、震旦，或你偏爱的派系。</p></div></li><li><span>02</span><div><strong>想改变什么？</strong><p>兵种、战役、界面，或整体体验。</p></div></li><li><span>03</span><div><strong>有什么取舍？</strong><p>不要大修、必须有汉化，或尽量轻量。</p></div></li></ol><div className="guide-bottom"><Icon name="shield"/><p>没有证据的信息会保持未知。推荐不代表已完成游戏内兼容测试。</p></div></aside>
-      <section className="recommend-main"><form className="prompt-panel" onSubmit={submit}><div className="prompt-topline"><label htmlFor="request-description">你的战役构想</label><span className="mode-badge">{health.data ? health.data.llm_configured ? "模型辅助推荐可用" : "规则检索模式" : health.error ? "服务暂不可用" : "正在检查服务"}</span></div><textarea id="request-description" value={query} onChange={(event) => setQuery(event.target.value)} maxLength={1000} minLength={2} required placeholder="例如：我主要玩帝国，想增加火炮和兵种内容，不要大型重做，最好有中文。" disabled={busy}/><div className="prompt-footer"><span>{query.length} / 1000<span className="prompt-hint"> · 尽量写清偏好和排除项</span></span><div>{busy && <button type="button" className="button button-quiet" onClick={cancel}>停止等待</button>}<button type="submit" className="button button-gold" disabled={busy || query.trim().length < 2}><Icon name={busy ? "refresh" : "spark"} className={busy ? "spinning" : ""}/>{busy ? "正在生成推荐" : "寻找适合的模组"}{!busy && <Icon name="arrow"/>}</button></div></div></form>
+    <div className="page-heading"><div><span className="eyebrow">THE WAR COUNCIL · 战役参谋</span><h1>下一场远征，从你的构想开始。</h1><p>告诉参谋你想玩的派系、期待的改变，以及需要避开的内容。</p></div><Mark className="page-crest"/></div>
+    <div className="recommend-layout"><aside className="recommend-guide"><div className="guide-symbol"><Mark/></div><span className="eyebrow">A LETTER TO YOUR SAGE</span><h2>落笔之前</h2><p>告诉我们你想玩什么，以及不想要什么。</p><ol><li><span>01</span><div><strong>想玩谁？</strong><p>例如帝国、震旦，或你偏爱的派系。</p></div></li><li><span>02</span><div><strong>想改变什么？</strong><p>兵种、战役、界面，或整体体验。</p></div></li><li><span>03</span><div><strong>有什么取舍？</strong><p>不要大修、必须有汉化，或尽量轻量。</p></div></li></ol><div className="guide-bottom"><Icon name="shield"/><p>没有证据的信息会保持未知。推荐不代表已完成游戏内兼容测试。</p></div></aside>
+      <section className="recommend-main"><form className="prompt-panel" onSubmit={submit}><div className="order-heading"><span>CAMPAIGN ORDERS</span><Icon name="swords"/><span>致我的战役参谋</span></div><div className="prompt-topline"><label htmlFor="request-description">你的战役构想</label><span className="mode-badge">{health.data ? health.data.llm_configured ? "模型辅助推荐可用" : "规则检索模式" : health.error ? "服务暂不可用" : "正在检查服务"}</span></div><textarea id="request-description" value={query} onChange={(event) => setQuery(event.target.value)} maxLength={1000} minLength={2} required placeholder="例如：我主要玩帝国，想增加火炮和兵种内容，不要大型重做，最好有中文。" disabled={busy}/><div className="prompt-footer"><span>{query.length} / 1000<span className="prompt-hint"> · 尽量写清偏好和排除项</span></span><div>{busy && <button type="button" className="button button-quiet" onClick={cancel}>停止等待</button>}<button type="submit" className="button button-gold" disabled={busy || query.trim().length < 2}><Icon name={busy ? "refresh" : "spark"} className={busy ? "spinning" : ""}/>{busy ? "正在生成推荐" : "寻找适合的模组"}{!busy && <Icon name="arrow"/>}</button></div></div></form>
       <div className="example-prompts"><span>试试这样问</span>{examples.map((example) => <button key={example} disabled={busy} onClick={() => setQuery(example)}>{example}<Icon name="arrow"/></button>)}</div>
-      {health.data && !health.data.llm_configured && <p className="source-note"><Icon name="book"/>当前使用结构化规则与目录检索；不会把规则结果标为大模型生成。</p>}
+      {health.data && !health.data.llm_configured && <p className="source-note"><Icon name="book"/>当前根据目录关键词与已知条件匹配。</p>}
       {health.error && <ErrorNotice message={health.error} onRetry={health.reload}/>}
       {error && <ErrorNotice message={error}/>}
       {cancelled && <div className="notice" role="status"><Icon name="x"/><p>已停止等待本次结果。服务端已经开始的处理可能仍会完成。</p></div>}
@@ -89,7 +89,7 @@ export function Recommend() {
         {result.items.length > 0 ? <div className="recommend-list">{result.items.map((item, index) => <article className="recommend-item" key={item.mod.id}><div className="recommend-item-top"><span>推荐候选 <b>{String(index + 1).padStart(2, "0")}</b></span><Link href={`/mods/${item.mod.id}`} className="text-link">查看详情与依据<Icon name="arrow"/></Link></div><div className="recommend-item-content"><ModCard mod={item.mod}/><div className="recommend-reasons"><h3><Icon name="check"/>为什么值得考虑</h3><ul>{item.reasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul>{item.caveats.length > 0 && <><h3 className="caveat-heading"><Icon name="alert"/>需要留意</h3><ul>{item.caveats.map((caveat, i) => <li key={i}>{caveat}</li>)}</ul></>}<p className="recommend-source">查看作者说明后，再决定是否加入自己的游戏。</p></div></div></article>)}</div> : <EmptyState icon="search" title="保持条件，或者试试调整范围"><p>目录覆盖与事实信息可能有限。你可以减少一项软偏好，再次搜索。</p></EmptyState>}
         <p className="run-note">本次记录：{result.run_id}</p>
       </section>}
-      {!busy && !result && !error && !cancelled && <div className="recommend-placeholder"><div className="placeholder-symbol"><Icon name="compass"/></div><h3>每一种玩法，都有自己的可能。</h3><p>描述你的需求，推荐会显示在这里。</p></div>}
+      {!busy && !result && !error && !cancelled && <div className="recommend-placeholder"><div className="placeholder-symbol"><Icon name="compass"/></div><span className="eyebrow">YOUR NEXT CAMPAIGN AWAITS</span><h3>战役尚未开始，可能已在眼前。</h3><p>写下你的构想，候选模组与推荐理由将在这里展开。</p></div>}
       </section>
     </div>
   </>;

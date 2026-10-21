@@ -19,7 +19,7 @@ export function ModArtwork({ mod, large = false }: { mod: Mod; large?: boolean }
   const [failed, setFailed] = useState(false);
   const image = safePreviewUrl(mod.preview_url);
   return <div className={`mod-artwork ${large ? "large" : ""}`}>
-    {image && !failed ? <Image src={image} width={800} height={450} alt={mod.title} unoptimized onError={() => setFailed(true)} loading={large ? "eager" : "lazy"}/> : <div className="artwork-fallback"><Mark/><span>WORKSHOP FIELD NOTES</span></div>}
+    {image && !failed ? <Image src={image} width={800} height={450} alt={mod.title} unoptimized onError={() => setFailed(true)} loading={large ? "eager" : "lazy"}/> : <div className="artwork-fallback"><Mark/><span>FROM THE OLD WORLD ARCHIVES</span></div>}
     <span className="artwork-category">{categoryName(mod.category)}</span>
   </div>;
 }

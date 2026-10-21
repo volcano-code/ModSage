@@ -30,6 +30,7 @@ export default defineConfig({
         MODSAGE_E2E: "1",
         MODSAGE_LLM_API_KEY: "",
         MODSAGE_STEAM_API_KEY: "",
+        MODSAGE_REFRESH_ENABLED: "false",
       },
       url: "http://127.0.0.1:8100/api/v1/health",
       timeout: 60_000,

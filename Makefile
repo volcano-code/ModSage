@@ -1,6 +1,6 @@
 PYTHON ?= .venv/bin/python
 
-.PHONY: setup api web test lint build init-db discover discover-public digest
+.PHONY: setup api web worker worker-once jobs enqueue-refresh test lint build init-db discover discover-public digest
 
 setup:
 	python3 -m venv .venv
@@ -16,6 +16,18 @@ api:
 
 web:
 	npm --prefix apps/web run dev
+
+worker:
+	$(PYTHON) -m modsage.cli worker
+
+worker-once:
+	$(PYTHON) -m modsage.cli worker --once
+
+jobs:
+	$(PYTHON) -m modsage.cli jobs --limit 20
+
+enqueue-refresh:
+	$(PYTHON) -m modsage.cli enqueue-refresh
 
 discover:
 	$(PYTHON) -m modsage.cli discover --limit 50

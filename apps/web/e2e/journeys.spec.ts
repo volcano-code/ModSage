@@ -71,6 +71,14 @@ test("empty and unavailable catalogue states remain explicit", async ({ page }) 
 });
 
 test("public proxy blocks admin access, invalid bodies, and oversized requests", async ({ request }) => {
+  const status = await request.get("/api/v1/sync/status");
+  expect(status.ok()).toBeTruthy();
+  expect(await status.json()).toMatchObject({
+    latest_job: null,
+    last_successful_refresh_at: null,
+    schedule: { enabled: false, timezone: "Asia/Shanghai" },
+    worker: { status: "unknown", last_seen_at: null },
+  });
   expect((await request.get("/api/v1/admin/sync")).status()).toBe(404);
   expect((await request.post("/api/v1/admin/sync", { data: {} })).status()).toBe(404);
   expect((await request.post("/api/v1/recommendations", {
@@ -86,9 +94,35 @@ test("mobile homepage and navigation fit the viewport", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: "ModSage 首页" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect.poll(() => page.locator("img.hero-painting").evaluate(
+    (image: HTMLImageElement) => image.complete && image.naturalWidth > 0
+  )).toBeTruthy();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(overflow).toBeFalsy();
   await page.getByRole("link", { name: "探索模组", exact: true }).first().click();
   await expect(page).toHaveURL(/\/explore/);
   await expect(page.getByRole("textbox", { name: "搜索模组" })).toBeVisible();
+});
+
+test("mobile catalogue, detail, collection and recommendation remain usable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const noOverflow = async () => {
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBeTruthy();
+  };
+  await page.goto("/explore");
+  await page.getByRole("textbox", { name: "搜索模组" }).fill("Empire");
+  await page.getByRole("button", { name: "搜索", exact: true }).click();
+  await page.getByRole("link", { name: empireTitle, exact: true }).click();
+  await expect(page.getByRole("heading", { name: empireTitle, exact: true })).toBeVisible();
+  await noOverflow();
+  await page.getByRole("button", { name: `加入清单：${empireTitle}`, exact: true }).click();
+  await page.getByRole("link", { name: /^我的清单/ }).click();
+  await page.getByRole("button", { name: "检查已知前置", exact: true }).click();
+  await expect(page.getByRole("link", { name: "#900000000099", exact: true })).toBeVisible();
+  await noOverflow();
+  await page.getByRole("link", { name: "需求推荐", exact: true }).click();
+  await page.getByLabel("你的战役构想").fill("帝国增加兵种和火炮，不要大修");
+  await page.getByRole("button", { name: "寻找适合的模组" }).click();
+  await expect(page.getByRole("region", { name: "推荐结果" }).getByRole("link", { name: empireTitle, exact: true })).toBeVisible();
+  await noOverflow();
 });

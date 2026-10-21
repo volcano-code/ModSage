@@ -21,13 +21,23 @@ services:
   api:
     build:
       context: ./apps/api
-    environment:
+    environment: &api-environment
       MODSAGE_DATABASE_URL: postgresql+psycopg://modsage:${POSTGRES_PASSWORD:-modsage-local-only}@db:5432/modsage
       MODSAGE_STEAM_API_KEY: ${MODSAGE_STEAM_API_KEY:-}
       MODSAGE_LLM_API_KEY: ${MODSAGE_LLM_API_KEY:-}
       MODSAGE_LLM_BASE_URL: ${MODSAGE_LLM_BASE_URL:-}
       MODSAGE_LLM_MODEL: ${MODSAGE_LLM_MODEL:-}
       MODSAGE_ADMIN_TOKEN: ${MODSAGE_ADMIN_TOKEN:-}
+      MODSAGE_REFRESH_ENABLED: ${MODSAGE_REFRESH_ENABLED:-false}
+      MODSAGE_REFRESH_SOURCE: ${MODSAGE_REFRESH_SOURCE:-api}
+      MODSAGE_REFRESH_HOUR: ${MODSAGE_REFRESH_HOUR:-8}
+      MODSAGE_REFRESH_MINUTE: ${MODSAGE_REFRESH_MINUTE:-0}
+      MODSAGE_REFRESH_LIMIT_PER_SORT: ${MODSAGE_REFRESH_LIMIT_PER_SORT:-20}
+      MODSAGE_REFRESH_ENRICH_LIMIT: ${MODSAGE_REFRESH_ENRICH_LIMIT:-0}
+      MODSAGE_REFRESH_MAX_ATTEMPTS: ${MODSAGE_REFRESH_MAX_ATTEMPTS:-3}
+      MODSAGE_REFRESH_LEASE_SECONDS: ${MODSAGE_REFRESH_LEASE_SECONDS:-60}
+      MODSAGE_REFRESH_REQUEST_BUDGET_SECONDS: ${MODSAGE_REFRESH_REQUEST_BUDGET_SECONDS:-180}
+      MODSAGE_REFRESH_POLL_SECONDS: ${MODSAGE_REFRESH_POLL_SECONDS:-15}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -38,6 +48,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
+
+  worker:
+    profiles: [automation]
+    build:
+      context: ./apps/api
+    command: ["python", "-m", "modsage.cli", "worker"]
+    environment: *api-environment
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
   web:

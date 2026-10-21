@@ -1,6 +1,16 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from modsage.database import Base
@@ -97,3 +107,46 @@ class IngestionRun(Base):
     requested_ids: Mapped[list] = mapped_column(JSON, default=list)
     imported_count: Mapped[int] = mapped_column(Integer, default=0)
     warnings: Mapped[list] = mapped_column(JSON, default=list)
+
+
+class RefreshJob(Base):
+    """Durable, bounded refresh with checkpoints and a per-claim fencing token."""
+
+    __tablename__ = "refresh_jobs"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    idempotency_key: Mapped[str] = mapped_column(String(160), unique=True)
+    source: Mapped[str] = mapped_column(String(16))
+    limit_per_sort: Mapped[int] = mapped_column(Integer)
+    enrich_limit: Mapped[int] = mapped_column(Integer)
+    request_budget_seconds: Mapped[float] = mapped_column(Float)
+    max_attempts: Mapped[int] = mapped_column(Integer)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(24), default="queued", index=True)
+    stage: Mapped[str] = mapped_column(String(24), default="discovery")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    lease_owner: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(48), nullable=True)
+    error_stage: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    result: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class RefreshLease(Base):
+    """One catalog writer, even when distinct jobs are claimed by several processes."""
+
+    __tablename__ = "refresh_leases"
+    name: Mapped[str] = mapped_column(String(32), primary_key=True)
+    owner: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class RefreshWorker(Base):
+    __tablename__ = "refresh_workers"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    stopped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

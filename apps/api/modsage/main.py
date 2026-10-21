@@ -15,6 +15,7 @@ from modsage.catalog import iso, list_mods, serialize_mod
 from modsage.config import Settings, get_settings
 from modsage.database import init_database, make_database
 from modsage.digests import build_digest, validate_modlist
+from modsage.jobs import sync_status
 from modsage.models import Mod, RecommendationRun
 from modsage.recommendations import recommend
 
@@ -70,7 +71,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        if request.url.path.startswith("/api/v1/runs"):
+        if request.url.path.startswith(("/api/v1/runs", "/api/v1/sync/status")):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -101,6 +102,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "data_source": "steam",
             "discovery_available": bool(settings.steam_api_key),
         }
+
+    @app.get("/api/v1/sync/status")
+    def refresh_status():
+        return sync_status(session_factory, settings)
 
     @app.get("/api/v1/mods")
     def mods(

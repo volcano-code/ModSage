@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,6 +19,16 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = Field(default=15.0, ge=1, le=25)
     recommendation_timeout_seconds: float = Field(default=25.0, ge=1, le=60)
     request_limit_per_minute: int = Field(default=20, ge=1, le=1000)
+    refresh_enabled: bool = False
+    refresh_source: Literal["api", "public"] = "api"
+    refresh_hour: int = Field(default=8, ge=0, le=23)
+    refresh_minute: int = Field(default=0, ge=0, le=59)
+    refresh_limit_per_sort: int = Field(default=20, ge=1, le=100)
+    refresh_enrich_limit: int = Field(default=0, ge=0, le=20)
+    refresh_max_attempts: int = Field(default=3, ge=1, le=5)
+    refresh_lease_seconds: int = Field(default=60, ge=10, le=600)
+    refresh_request_budget_seconds: float = Field(default=180, ge=1, le=900)
+    refresh_poll_seconds: float = Field(default=15, ge=1, le=60)
 
     @property
     def llm_configured(self) -> bool:

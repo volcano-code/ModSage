@@ -139,7 +139,11 @@ jobs:
       - name: Verify frontend-to-API connection
         run: |
           curl --fail --silent --show-error http://127.0.0.1:3000/api/v1/health
+          curl --fail --silent --show-error http://127.0.0.1:3000/api/v1/sync/status
           curl --fail --silent --show-error --output /dev/null http://127.0.0.1:3000/
+      - name: Start optional worker without external discovery
+        run: |
+          docker compose --profile automation run --build --rm --no-deps -e MODSAGE_REFRESH_ENABLED=false worker python -m modsage.cli worker --once
       - name: Container diagnostics
         if: failure()
         run: docker compose logs --no-color
