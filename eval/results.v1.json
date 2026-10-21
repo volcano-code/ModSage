@@ -1,0 +1,1563 @@
+{
+  "schema_version": 1,
+  "dataset_id": "workshop-excerpts-20261020-v1",
+  "corpus_sha256": "99d68d0371e8b7125a3896239ff213a8ea1ad5a0380bf8f7355d3ce25ecd07ef",
+  "queries_sha256": "5234aab8b190101a7a264d75b87bf3c34ec3e9c86694dcd4ba01f5f591446774",
+  "documents": 42,
+  "k": 5,
+  "provider_calls": 0,
+  "timing_scope": "disabled",
+  "limitations": [
+    "Small frozen title/tag/excerpt corpus, not the full live catalog.",
+    "Development judgments, not independent human labels or user satisfaction.",
+    "Regression split is fixed regression coverage, not an untouched statistical holdout.",
+    "Unjudged documents score zero; judgments are scoped to this corpus.",
+    "No semantic-provider, hybrid-quality or production-latency claim."
+  ],
+  "summary": {
+    "all": {
+      "legacy_keywords": {
+        "queries": 28,
+        "answerable_queries": 25,
+        "no_answer_queries": 3,
+        "recall_at_k": 0.92,
+        "ndcg_at_k": 0.8753327577338943,
+        "mrr_at_k": 0.8733333333333333,
+        "no_answer_accuracy": 1.0,
+        "hard_constraint_violations": 0,
+        "queries_with_forbidden_judgments": 9
+      },
+      "bm25": {
+        "queries": 28,
+        "answerable_queries": 25,
+        "no_answer_queries": 3,
+        "recall_at_k": 0.92,
+        "ndcg_at_k": 0.8899671829068591,
+        "mrr_at_k": 0.9,
+        "no_answer_accuracy": 1.0,
+        "hard_constraint_violations": 0,
+        "queries_with_forbidden_judgments": 9
+      }
+    },
+    "development": {
+      "legacy_keywords": {
+        "queries": 14,
+        "answerable_queries": 12,
+        "no_answer_queries": 2,
+        "recall_at_k": 0.9166666666666666,
+        "ndcg_at_k": 0.8645978228698209,
+        "mrr_at_k": 0.8611111111111112,
+        "no_answer_accuracy": 1.0,
+        "hard_constraint_violations": 0,
+        "queries_with_forbidden_judgments": 5
+      },
+      "bm25": {
+        "queries": 14,
+        "answerable_queries": 12,
+        "no_answer_queries": 2,
+        "recall_at_k": 0.9166666666666666,
+        "ndcg_at_k": 0.8915440858293193,
+        "mrr_at_k": 0.9166666666666666,
+        "no_answer_accuracy": 1.0,
+        "hard_constraint_violations": 0,
+        "queries_with_forbidden_judgments": 5
+      }
+    },
+    "regression": {
+      "legacy_keywords": {
+        "queries": 14,
+        "answerable_queries": 13,
+        "no_answer_queries": 1,
+        "recall_at_k": 0.9230769230769231,
+        "ndcg_at_k": 0.8852419283776544,
+        "mrr_at_k": 0.8846153846153846,
+        "no_answer_accuracy": 1.0,
+        "hard_constraint_violations": 0,
+        "queries_with_forbidden_judgments": 4
+      },
+      "bm25": {
+        "queries": 14,
+        "answerable_queries": 13,
+        "no_answer_queries": 1,
+        "recall_at_k": 0.9230769230769231,
+        "ndcg_at_k": 0.8885115802092034,
+        "mrr_at_k": 0.8846153846153846,
+        "no_answer_accuracy": 1.0,
+        "hard_constraint_violations": 0,
+        "queries_with_forbidden_judgments": 4
+      }
+    }
+  },
+  "queries": [
+    {
+      "id": "q01",
+      "split": "development",
+      "query": "震旦将领卫队坐骑",
+      "expected": "answerable",
+      "qrels": {
+        "2862938097": 2,
+        "3031564620": 2
+      },
+      "forbidden_ids": [
+        "3816273830",
+        "3810707862"
+      ],
+      "constraints": {
+        "factions": [
+          "cathay"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 4,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3823226336",
+            "3823280996",
+            "3031564620",
+            "2862938097"
+          ],
+          "returned_count": 4,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 0.5706417189553201,
+            "mrr_at_k": 0.3333333333333333
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "2862938097",
+            "3823280996",
+            "3823226336",
+            "3031564620"
+          ],
+          "returned_count": 4,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 0.8772153153380493,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q02",
+      "split": "development",
+      "query": "震旦更多精英兵种，不要大修",
+      "expected": "answerable",
+      "qrels": {
+        "3823280996": 2
+      },
+      "forbidden_ids": [
+        "2791750313",
+        "2791750896",
+        "3135224876",
+        "3262628260"
+      ],
+      "constraints": {
+        "factions": [
+          "cathay"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [
+          "overhaul"
+        ],
+        "required_topics": [
+          "units"
+        ],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 3,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3823280996",
+            "3031564620",
+            "2862938097"
+          ],
+          "returned_count": 3,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3823280996",
+            "2862938097",
+            "3031564620"
+          ],
+          "returned_count": 3,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q03",
+      "split": "development",
+      "query": "帝国，兵种保持原版，只改兵种外观",
+      "expected": "answerable",
+      "qrels": {
+        "3439962318": 2
+      },
+      "forbidden_ids": [
+        "2862938097",
+        "3031564620",
+        "3823280996",
+        "3816273830"
+      ],
+      "constraints": {
+        "factions": [
+          "empire"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [
+          "units"
+        ],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 2,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3439962318",
+            "3819675091"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3439962318",
+            "3819675091"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q04",
+      "split": "development",
+      "query": "Vampire hero skill trees",
+      "expected": "answerable",
+      "qrels": {
+        "3054236428": 2
+      },
+      "forbidden_ids": [
+        "3816273830"
+      ],
+      "constraints": {
+        "factions": [
+          "vampires"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 3,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3054236428",
+            "3821351778",
+            "3810707862"
+          ],
+          "returned_count": 3,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3054236428",
+            "3810707862",
+            "3821351778"
+          ],
+          "returned_count": 3,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q05",
+      "split": "development",
+      "query": "高等精灵英雄合集",
+      "expected": "answerable",
+      "qrels": {
+        "3816273830": 2
+      },
+      "forbidden_ids": [
+        "3810707862",
+        "3054236428"
+      ],
+      "constraints": {
+        "factions": [
+          "high_elves"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 1,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3816273830"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3816273830"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q06",
+      "split": "development",
+      "query": "想要改善界面的数值显示",
+      "expected": "answerable",
+      "qrels": {
+        "3821023268": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3821023268"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3821023268",
+            "3135224876"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q07",
+      "split": "development",
+      "query": "LOD 远景细节",
+      "expected": "answerable",
+      "qrels": {
+        "2858955442": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "2858955442"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "2858955442"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q08",
+      "split": "development",
+      "query": "Oldhammer Classic Nagash",
+      "expected": "answerable",
+      "qrels": {
+        "3821066217": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3821066217",
+            "3810707862"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3821066217",
+            "3810707862"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q09",
+      "split": "development",
+      "query": "Third-person battles",
+      "expected": "answerable",
+      "qrels": {
+        "3822187184": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3822187184",
+            "3823348938"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3822187184",
+            "3823348938",
+            "3763387680",
+            "3820224735",
+            "3820906068"
+          ],
+          "returned_count": 5,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q10",
+      "split": "development",
+      "query": "大修 Radious Part 1",
+      "expected": "answerable",
+      "qrels": {
+        "2791750313": 2,
+        "2791750896": 1,
+        "3135224876": 1
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "2791750896",
+            "2791750313",
+            "3262628260",
+            "3135224876"
+          ],
+          "returned_count": 4,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 0.804532155482531,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3135224876",
+            "2791750313",
+            "2791750896",
+            "3262628260"
+          ],
+          "returned_count": 4,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 0.8213137146137828,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q11",
+      "split": "development",
+      "query": "矮人深邃建筑",
+      "expected": "answerable",
+      "qrels": {
+        "3572707881": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [
+          "dwarfs"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 1,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3572707881"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3572707881"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q12",
+      "split": "development",
+      "query": "必须有汉化的帝国火炮模组",
+      "expected": "no_answer",
+      "qrels": {},
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [
+          "empire"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": true,
+        "chinese_preferred": true,
+        "keywords": []
+      },
+      "eligible_count": 0,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [],
+          "returned_count": 0,
+          "metrics": {
+            "recall_at_k": null,
+            "ndcg_at_k": null,
+            "mrr_at_k": null
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": true
+        },
+        "bm25": {
+          "ids": [],
+          "returned_count": 0,
+          "metrics": {
+            "recall_at_k": null,
+            "ndcg_at_k": null,
+            "mrr_at_k": null
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": true
+        }
+      }
+    },
+    {
+      "id": "q13",
+      "split": "development",
+      "query": "霓虹赛博摩托竞速",
+      "expected": "no_answer",
+      "qrels": {},
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [],
+          "returned_count": 0,
+          "metrics": {
+            "recall_at_k": null,
+            "ndcg_at_k": null,
+            "mrr_at_k": null
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": true
+        },
+        "bm25": {
+          "ids": [],
+          "returned_count": 0,
+          "metrics": {
+            "recall_at_k": null,
+            "ndcg_at_k": null,
+            "mrr_at_k": null
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": true
+        }
+      }
+    },
+    {
+      "id": "q14",
+      "split": "development",
+      "query": "爆炸摧毁战场树木",
+      "expected": "answerable",
+      "qrels": {
+        "3820906068": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [],
+          "returned_count": 0,
+          "metrics": {
+            "recall_at_k": 0.0,
+            "ndcg_at_k": 0.0,
+            "mrr_at_k": 0.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [],
+          "returned_count": 0,
+          "metrics": {
+            "recall_at_k": 0.0,
+            "ndcg_at_k": 0.0,
+            "mrr_at_k": 0.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q15",
+      "split": "regression",
+      "query": "Cathay bodyguard mount",
+      "expected": "answerable",
+      "qrels": {
+        "3031564620": 2,
+        "2862938097": 2
+      },
+      "forbidden_ids": [
+        "3816273830",
+        "3810707862"
+      ],
+      "constraints": {
+        "factions": [
+          "cathay"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 4,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3031564620",
+            "3823226336",
+            "3823280996",
+            "2862938097"
+          ],
+          "returned_count": 4,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 0.8772153153380493,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3031564620",
+            "3823226336",
+            "2862938097",
+            "3823280996"
+          ],
+          "returned_count": 4,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 0.9197207891481876,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q16",
+      "split": "regression",
+      "query": "Bretonnia infantry roster without overhaul",
+      "expected": "answerable",
+      "qrels": {
+        "3820672770": 2
+      },
+      "forbidden_ids": [
+        "2791750313",
+        "2791750896",
+        "3135224876",
+        "3262628260"
+      ],
+      "constraints": {
+        "factions": [
+          "bretonnia"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [
+          "overhaul"
+        ],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 1,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3820672770"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3820672770"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q17",
+      "split": "regression",
+      "query": "鼠人 Rat Ogre",
+      "expected": "answerable",
+      "qrels": {
+        "3819817443": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [
+          "skaven"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 1,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3819817443"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3819817443"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q18",
+      "split": "regression",
+      "query": "Empire Elector Count，不要大修",
+      "expected": "answerable",
+      "qrels": {
+        "3819675091": 2
+      },
+      "forbidden_ids": [
+        "2791750313",
+        "2791750896",
+        "3135224876",
+        "3262628260"
+      ],
+      "constraints": {
+        "factions": [
+          "empire"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [
+          "overhaul"
+        ],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 2,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3819675091",
+            "3439962318"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3819675091",
+            "3439962318"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q19",
+      "split": "regression",
+      "query": "No Knockdown Invincibility",
+      "expected": "answerable",
+      "qrels": {
+        "3820224735": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3820224735"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3820224735"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q20",
+      "split": "regression",
+      "query": "Wood Elves outposts",
+      "expected": "answerable",
+      "qrels": {
+        "3823414891": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3823414891",
+            "3816273830"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3823414891",
+            "3816273830"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q21",
+      "split": "regression",
+      "query": "faster Khorne recruitment",
+      "expected": "answerable",
+      "qrels": {
+        "3823409841": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3823409841"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3823409841"
+          ],
+          "returned_count": 1,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q22",
+      "split": "regression",
+      "query": "Malekith Morathi start together",
+      "expected": "answerable",
+      "qrels": {
+        "3336408550": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3336408550",
+            "3583510824",
+            "3536560986"
+          ],
+          "returned_count": 3,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3336408550",
+            "3583510824",
+            "3536560986"
+          ],
+          "returned_count": 3,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q23",
+      "split": "regression",
+      "query": "Vortex campaign Immortal Empires",
+      "expected": "answerable",
+      "qrels": {
+        "3819497630": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3819497630",
+            "3823414891",
+            "3823409841",
+            "3823226336",
+            "3820811577"
+          ],
+          "returned_count": 5,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3819497630",
+            "3054236428",
+            "3536560986",
+            "3572707881",
+            "3583510824"
+          ],
+          "returned_count": 5,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q24",
+      "split": "regression",
+      "query": "震旦宁和腐蚀汉化",
+      "expected": "answerable",
+      "qrels": {
+        "3823226336": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [
+          "cathay"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": true,
+        "keywords": []
+      },
+      "eligible_count": 4,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3823226336",
+            "3823280996",
+            "3031564620",
+            "2862938097"
+          ],
+          "returned_count": 4,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3823226336",
+            "2862938097",
+            "3823280996",
+            "3031564620"
+          ],
+          "returned_count": 4,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q25",
+      "split": "regression",
+      "query": "吸血鬼，兵种保持原版，只改英雄外观",
+      "expected": "answerable",
+      "qrels": {
+        "3821351778": 2
+      },
+      "forbidden_ids": [
+        "3810707862",
+        "3816273830",
+        "3823280996"
+      ],
+      "constraints": {
+        "factions": [
+          "vampires"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [
+          "units"
+        ],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 2,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3054236428",
+            "3821351778"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 0.6309297535714574,
+            "mrr_at_k": 0.5
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3054236428",
+            "3821351778"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 0.6309297535714574,
+            "mrr_at_k": 0.5
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q26",
+      "split": "regression",
+      "query": "基斯里夫新增兵种，不要大修",
+      "expected": "no_answer",
+      "qrels": {},
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [
+          "kislev"
+        ],
+        "excluded_factions": [],
+        "excluded_categories": [
+          "overhaul"
+        ],
+        "required_topics": [
+          "units"
+        ],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 0,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [],
+          "returned_count": 0,
+          "metrics": {
+            "recall_at_k": null,
+            "ndcg_at_k": null,
+            "mrr_at_k": null
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": true
+        },
+        "bm25": {
+          "ids": [],
+          "returned_count": 0,
+          "metrics": {
+            "recall_at_k": null,
+            "ndcg_at_k": null,
+            "mrr_at_k": null
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": true
+        }
+      }
+    },
+    {
+      "id": "q27",
+      "split": "regression",
+      "query": "火攻城镇 siege battles",
+      "expected": "answerable",
+      "qrels": {
+        "3823348938": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [
+            "3823348938",
+            "3822187184"
+          ],
+          "returned_count": 2,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [
+            "3823348938",
+            "3822187184",
+            "3763387680",
+            "3820224735",
+            "3820906068"
+          ],
+          "returned_count": 5,
+          "metrics": {
+            "recall_at_k": 1.0,
+            "ndcg_at_k": 1.0,
+            "mrr_at_k": 1.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    },
+    {
+      "id": "q28",
+      "split": "regression",
+      "query": "让弓箭手边走边射时分散目标",
+      "expected": "answerable",
+      "qrels": {
+        "3821755595": 2
+      },
+      "forbidden_ids": [],
+      "constraints": {
+        "factions": [],
+        "excluded_factions": [],
+        "excluded_categories": [],
+        "required_topics": [],
+        "chinese_required": false,
+        "chinese_preferred": false,
+        "keywords": []
+      },
+      "eligible_count": 42,
+      "methods": {
+        "legacy_keywords": {
+          "ids": [],
+          "returned_count": 0,
+          "metrics": {
+            "recall_at_k": 0.0,
+            "ndcg_at_k": 0.0,
+            "mrr_at_k": 0.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        },
+        "bm25": {
+          "ids": [],
+          "returned_count": 0,
+          "metrics": {
+            "recall_at_k": 0.0,
+            "ndcg_at_k": 0.0,
+            "mrr_at_k": 0.0
+          },
+          "forbidden_hits": [],
+          "no_answer_correct": null
+        }
+      }
+    }
+  ],
+  "checks": {
+    "passed": true,
+    "failures": []
+  }
+}

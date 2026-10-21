@@ -8,6 +8,7 @@ import sys
 from modsage.config import get_settings
 from modsage.database import init_database, make_database
 from modsage.digests import build_digest
+from modsage.embeddings import backfill_embeddings, embedding_status
 from modsage.enrichment import enrich_mods
 from modsage.ingestion import sync_ids
 from modsage.jobs import enqueue_refresh, list_jobs, run_worker, sync_status
@@ -23,6 +24,12 @@ def parse_ids(values):
 
 
 async def execute(args, settings, session_factory):
+    if args.command == "embedding-status":
+        return embedding_status(session_factory, settings)
+    if args.command == "embed":
+        return await backfill_embeddings(
+            session_factory, settings, limit=args.limit, batch_size=args.batch_size
+        )
     if args.command == "init-db":
         from modsage import __version__
 
@@ -78,6 +85,14 @@ async def execute(args, settings, session_factory):
 def main():
     parser = argparse.ArgumentParser(description="ModSage source and knowledge operations")
     subs = parser.add_subparsers(dest="command", required=True)
+    subs.add_parser(
+        "embedding-status", help="Inspect current provider/model source-aware vector coverage"
+    )
+    embed = subs.add_parser(
+        "embed", help="Explicitly backfill a bounded batch of source embeddings"
+    )
+    embed.add_argument("--limit", type=int, default=20, choices=range(1, 201), metavar="1..200")
+    embed.add_argument("--batch-size", type=int, default=8, choices=range(1, 17), metavar="1..16")
     subs.add_parser(
         "init-db", help="Initialize the database, including additive refresh-job tables"
     )
@@ -136,10 +151,13 @@ def main():
             return 1
         return 0
     except Exception as exc:
+        from modsage.embeddings import EmbeddingUnavailable
         from modsage.llm import ModelUnavailable
         from modsage.sources.steam import SteamConfigurationError
 
-        if isinstance(exc, SteamConfigurationError):
+        if isinstance(exc, EmbeddingUnavailable):
+            hint = "请配置 MODSAGE_EMBEDDING_API_KEY、MODSAGE_EMBEDDING_BASE_URL、MODSAGE_EMBEDDING_MODEL；向量回填不会自动借用对话模型配置。"
+        elif isinstance(exc, SteamConfigurationError):
             hint = "官方发现需要 MODSAGE_STEAM_API_KEY；也可显式 --public 使用有限公开目录。"
         elif isinstance(exc, ModelUnavailable):
             hint = "请检查 MODSAGE_LLM_API_KEY、MODSAGE_LLM_MODEL 及模型服务可用性。"

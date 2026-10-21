@@ -1,0 +1,638 @@
+{
+  "schema_version": 1,
+  "dataset_id": "workshop-excerpts-20261020-v1",
+  "purpose": "offline_evaluation_only",
+  "description": "42 real Workshop records from the 2026-10-20 local catalog; original titles/tags and short source excerpts only. No raw snapshots or production seed data.",
+  "excerpt_policy": "At most 25 conservative word units for title, tags and excerpt combined; each Chinese character counts as one unit.",
+  "documents": [
+    {
+      "id": "2791750313",
+      "title": "Radious Total War Mod - Part 1",
+      "description_excerpt": "Complete game overhaul mod",
+      "tags": [
+        "mod",
+        "overhaul"
+      ],
+      "category": "overhaul",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2791750313",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "72b04b7ba415a94c202dfba0915aab97787508633a78e179929e6b73d33b3709",
+      "feature_sha256": "62fcc8547e79c44d3fb7d356c78b1ae2525a804068fff8d976f240a8b7be2dc3"
+    },
+    {
+      "id": "2791750896",
+      "title": "Radious Total War Mod - Part 2",
+      "description_excerpt": "Complete game overhaul mod",
+      "tags": [
+        "mod",
+        "overhaul"
+      ],
+      "category": "overhaul",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2791750896",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "4cf5c2f5f23b52d0e2a9ca05a1e0fe7af8752f5f7fb26adfdc6998ed9f44ce0a",
+      "feature_sha256": "ea4ba699e3678e9f58b0269f7f94d9979e668a0fa27e013ebf023b153e0f37e6"
+    },
+    {
+      "id": "2858955442",
+      "title": "Warhammer 3 LOD Distance Enhanced",
+      "description_excerpt": "LOD(level of detail) distance",
+      "tags": [
+        "mod",
+        "graphical"
+      ],
+      "category": "visual",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2858955442",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "315d548b3843d9032e5519e2ec665f4e4f94b497f54ab4f511e7e3830a0c1b02",
+      "feature_sha256": "4e38f408aedca1e5971b07668ca63082b13d5a3ccb53b3f9b191ad7efe6d227e"
+    },
+    {
+      "id": "2862938097",
+      "title": "震旦将领卫队（坐骑拓展）",
+      "description_excerpt": "坐骑类mod，以将领卫队为主",
+      "tags": [
+        "mod",
+        "units"
+      ],
+      "category": "units",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2862938097",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "9639aa45a0f819d9060dc17daba4de0b7da8048cf37b94ff2dcaeb2b793aea36",
+      "feature_sha256": "908bec9e9921e20df58c8e6ed7975d80f358d8e26155cb711b3336f771bb65e3"
+    },
+    {
+      "id": "3031564620",
+      "title": "Cathay Bodyguard（Mount expand）",
+      "description_excerpt": "adds new mounts options to all Cathay lords and heroes",
+      "tags": [
+        "mod",
+        "units"
+      ],
+      "category": "units",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3031564620",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "532a1494283508a0e87928224337330456ebd8faeca8baeed02afc82396ea867",
+      "feature_sha256": "026b5387757235d9a28512d6097d39a58121fd344d21e16a2b3332007ebb2ef1"
+    },
+    {
+      "id": "3054236428",
+      "title": "Vampire Counts Expanded Hero Skill Trees",
+      "description_excerpt": "Does not affect Lords.",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3054236428",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "035dae5731df6a9849b009a96e2d943880df30c786292e10b2bb3311c0b9aa88",
+      "feature_sha256": "3fa06f00860e01063103653bbb18d8e63fa69f77635f2b411f1729f3eec3d41c"
+    },
+    {
+      "id": "3135224876",
+      "title": "Radious真理屠夫大修",
+      "description_excerpt": "这是一个基于Radious Total War Mod的数据大修Mod。",
+      "tags": [
+        "mod"
+      ],
+      "category": "overhaul",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3135224876",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "55541107e9dec832e36a8da047bdb695bced3f74be074f0ee44a327f85a434b6",
+      "feature_sha256": "eb5293f2495973f29c58f471f20f598402c6986cde13e1e2338371151f50909c"
+    },
+    {
+      "id": "3262628260",
+      "title": "枪火盟约（火药派系大修）",
+      "description_excerpt": "为所有工程师领主与部分工程",
+      "tags": [
+        "mod",
+        "overhaul"
+      ],
+      "category": "overhaul",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3262628260",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "6887b452a17d56778d8349e6626288567a93c35e76548fad093d55885b23f653",
+      "feature_sha256": "5a7d6508008b661994de7de764d9585932b8f22803c32e0ecf938e6589cde0c7"
+    },
+    {
+      "id": "3287245285",
+      "title": "Expanded Hero Skill Trees Compilation",
+      "description_excerpt": "This mod is an all-in-one compilation of my other hero skill mods.",
+      "tags": [
+        "mod",
+        "compilation"
+      ],
+      "category": "other",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3287245285",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "325352193ed30cbee3a318545cde75ea3c70b11e03a68664090b6f16a1151471",
+      "feature_sha256": "969e1c7d063fc38dc9407129ba22c0bc4d761d10138b1a2b21bb3dbe84d776a7"
+    },
+    {
+      "id": "3336408550",
+      "title": "Malekith and Morathi Start Together",
+      "description_excerpt": "Malekith and Morathi start in Naggarond.",
+      "tags": [
+        "mod",
+        "graphical"
+      ],
+      "category": "visual",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3336408550",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "b29b607093eeef8042a77442857c11af36fcd8f9663df1f01d7210926fce3a34",
+      "feature_sha256": "676d57e231ac1dd8a73b8c1f14370d7afba1c2fc9d0a56cd1655f5cbb79caca7"
+    },
+    {
+      "id": "3388312326",
+      "title": "将领卫队系列合集（17合1）",
+      "description_excerpt": "为大多数派系的领主/事务官添加",
+      "tags": [
+        "mod",
+        "units"
+      ],
+      "category": "units",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3388312326",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "12c7770e2caf2798f7f2c83322bb88da6400f6d558e89e0ec36c0882ddc7c20d",
+      "feature_sha256": "8722e570d90c1a0daaac72b533975821a48291274a074b19a655ef6749bd078b"
+    },
+    {
+      "id": "3389974313",
+      "title": "Ruo's Bodyguards & Mounts All-In-One",
+      "description_excerpt": "This mod adds 500+ Bodyguards/Mounts to TWW3",
+      "tags": [
+        "mod",
+        "units"
+      ],
+      "category": "units",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3389974313",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "700e4fead3db0911b373802ba170289ecc2d5b3f612ed5ffeb3b6acd31c3a124",
+      "feature_sha256": "1be41b6ec8d7d875e3db4f400561cb37f0765f46de803d7aab7d1ee1e6f53c8e"
+    },
+    {
+      "id": "3439962318",
+      "title": "Штатные войска. Саб мод к ZC reskin || State troops. ZC empire reskin sub mod.",
+      "description_excerpt": "Сделал небольшой саб мод",
+      "tags": [
+        "mod",
+        "graphical"
+      ],
+      "category": "visual",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3439962318",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "076febb3f3a692aa1b853497a64b58ac00ad3718a3c235b86440b3ea6ab32bed",
+      "feature_sha256": "823b0b6c1cf2b467087a10116e6656c48580d583ff1fd3ebab97940f3698fe31"
+    },
+    {
+      "id": "3536560986",
+      "title": "Kroq-Gar Start in Lustria",
+      "description_excerpt": "A version only for Kroq-Gar. He starts in Xhotl",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3536560986",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "1a2bc33b24e1ab11ceb8763bfc0c23a45f69a078fe3b0c4cc154019e2f305002",
+      "feature_sha256": "6facebfd23326aec5b7b5a89036a8cb0720556e43cc1ea2d5490961319e45e7b"
+    },
+    {
+      "id": "3572707881",
+      "title": "矮人深邃强化better dwarf underdeep buildings",
+      "description_excerpt": "强化矮人深邃建筑",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3572707881",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "d5cab199053cd807931145939a67176b503559e593b7618543836881e27430cb",
+      "feature_sha256": "af679d8a4a6d04cacf0413b15e411c910ec07d479e1cd6890eb48d8f093254a6"
+    },
+    {
+      "id": "3583510824",
+      "title": "Karl Franz and Balthasar Gelt Start Together",
+      "description_excerpt": "Both Lords start in Altdorf region.",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3583510824",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "ce2d5dd137cfd86171c22833b74e9a2553b99783831471fabfaeeea99aebe8ba",
+      "feature_sha256": "5d93db71edb8ca774b44769091933e6b5cf26f1db4302302f592b3fac5aaf29e"
+    },
+    {
+      "id": "3607436758",
+      "title": "The Tooltip Project - Deutsch/German",
+      "description_excerpt": "Diese Mod übersetzt \"The Tooltip Project\" ins Deutsche.",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3607436758",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "66d64c66b6f64f7bc29cf4f24bb17c5e6119260eaab21c14532f10f685881557",
+      "feature_sha256": "3ac7c46b47ef880441d6a658ba651660996c3dd6693275fcb8806ed6097de027"
+    },
+    {
+      "id": "3759517661",
+      "title": "Path To Glory Expanded (STS)",
+      "description_excerpt": "This mod rebalances the Path to Glory",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3759517661",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "1d617f4f9cbf9a0dec76d4e3d5a9ffa8b17cf16d25bd059f0c1102e2f6c921d3",
+      "feature_sha256": "378daeec79b175ce0a0364cdfd4f3172ec38035ab04422ba8a56cbbc71cbcd96"
+    },
+    {
+      "id": "3763387680",
+      "title": "Tomb Kings Bone Dragon Mount",
+      "description_excerpt": "A lore-friendly Bone Dragon mount created to complement the Tomb Kings roster",
+      "tags": [
+        "mod",
+        "battle"
+      ],
+      "category": "battle",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3763387680",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "109beabe70db5eb228dfa199cd8afcba5706b75184fc1a85c9b9ce4719d4b096",
+      "feature_sha256": "0673ab6e73bcc2a7a4ac0b8f66f85f875d5a738b3c3e60b44b92d6a18bdc64f1"
+    },
+    {
+      "id": "3810707862",
+      "title": "Mangers Heroes for Vampire Counts (and Nagash)",
+      "description_excerpt": "A compilation of my hero mods",
+      "tags": [
+        "mod",
+        "units"
+      ],
+      "category": "units",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3810707862",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "6732974b32780e40c4df5e67c7a94fefe6b82b39ccaebcaefbcc45b4814558f6",
+      "feature_sha256": "595f56491ecf89dcc7b29864935fa39b060cabc368cecc0869409417c886ea3f"
+    },
+    {
+      "id": "3816273830",
+      "title": "Mangers High Elves Heroes Compilation",
+      "description_excerpt": "This mod simply contains a collection of my High Elves Heroes",
+      "tags": [
+        "mod",
+        "units"
+      ],
+      "category": "units",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3816273830",
+      "observed_at": "2026-10-20T09:11:23.260585Z",
+      "source_content_hash": "74a42e5d6baa6558fffc1406466b617f32623378aa28698a89c76ceb53e82b27",
+      "feature_sha256": "ade15d01bcf19e88d26bf3895a171547dcb7d49564275701ffc3883680d80e8f"
+    },
+    {
+      "id": "3819497630",
+      "title": "Vortex Campaign in Immortal Empires (Beta)",
+      "description_excerpt": "This mod adds the vortex campaigns from Warhammer 2",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3819497630",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "4c53b6802ac0ac9ce6cb69f8b012e49be658c2adf04e69ea4d4419bf26118c5e",
+      "feature_sha256": "7f4971da189014d1344ce89a09175bad00bd0753b7805216886b52b658094b0d"
+    },
+    {
+      "id": "3819529116",
+      "title": "ziyong.pack",
+      "description_excerpt": "",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3819529116",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "e58af028c1a3dc92b02c83eddaa81853488204d1daee7670098501e168a0ae90",
+      "feature_sha256": "80c73709c4431723d300f2ecee7f8e75267a5dd88c2591204fa5f9f0fd085f99"
+    },
+    {
+      "id": "3819675091",
+      "title": "Elector Count Expanded",
+      "description_excerpt": "Adds 10 new Elector Counts to the 13 of the Empire",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3819675091",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "711534b774ee459835ca0992e32f7ce4bf306deec6cef13b3409a284afdb00fc",
+      "feature_sha256": "b6f37bd0d4fb03a60054df4df39cdd91394deace5903b5fae1715c8da997e4ea"
+    },
+    {
+      "id": "3819817443",
+      "title": "Skaven Great Clans: Rat Ogre Variations",
+      "description_excerpt": "Bring true clan identity and visual diversity to your Skaven armies!",
+      "tags": [
+        "mod",
+        "units"
+      ],
+      "category": "units",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3819817443",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "99955e44b31465b78514340fde0b3dff03dd45d025063c3088786b0bb007021f",
+      "feature_sha256": "8de73d0c4c4da6ed2853cb4119cb9fb2a452495df109a68bbb1869b2ab7afaba"
+    },
+    {
+      "id": "3820224735",
+      "title": "No Knockdown Invincibility",
+      "description_excerpt": "lets your units hit enemies that are lying on the ground.",
+      "tags": [
+        "mod",
+        "battle"
+      ],
+      "category": "battle",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3820224735",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "869212b523bd5eca8815f4c349c594f02a210cc2091af9aa9bfe93d66b448831",
+      "feature_sha256": "57423e07d710bb0b8c034b9ec5f25b2fe51bca07f65f2f00840c8f92f1abf34a"
+    },
+    {
+      "id": "3820672770",
+      "title": "Bretonnia On Foot",
+      "description_excerpt": "Bretonnia on Foot expands Bretonnia’s frontline with a complete, lore-friendly infantry and monastic roster",
+      "tags": [
+        "mod",
+        "units"
+      ],
+      "category": "units",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3820672770",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "ab741d6af292ed5ba75a8e362ff16deef2c91e96d5656d26944adbe52ac4eed0",
+      "feature_sha256": "a1fc666cf89c7738657a3787cf1a44837f38d4117b2f8e1b701284859a4cf7fb"
+    },
+    {
+      "id": "3820811577",
+      "title": "Automatic Lord Group",
+      "description_excerpt": "forming a 'battle group' that follows the lord.",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3820811577",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "183f40c4afe4cfc18f061ab5857b613b25c399c611aed72a5286fc88cb3a1efc",
+      "feature_sha256": "9c306e277b984c53f039015f50edb10774ea65dea2989b83dbff9e48ff20cf1e"
+    },
+    {
+      "id": "3820906068",
+      "title": "TIMBER, WITH WILDFIRE!",
+      "description_excerpt": "Timber! lets explosions knock down the trees they hit.",
+      "tags": [
+        "mod",
+        "battle"
+      ],
+      "category": "battle",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3820906068",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "84d0b43e1b996fed8affcb888a066f78eebc8a6b5f9ab750c1d4ef153105dc4f",
+      "feature_sha256": "1b3be19cf80057c5f2add1805916f8a0315cdf9a04d27ce31cfcbaeba5656e42"
+    },
+    {
+      "id": "3820968796",
+      "title": "CRYSTAL CLEAR RESHADE — NO BLUR, ULTRA SHARP (AUTO-INSTALL EDITION)",
+      "description_excerpt": "Removes temporal blur",
+      "tags": [
+        "mod",
+        "graphical"
+      ],
+      "category": "visual",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3820968796",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "82c3342186ce5c62f691d292042f9a57998546f9eeb57c24874cf88fb430c6e5",
+      "feature_sha256": "85da49c6153f4105831935a395398c0d249d0f2cc5d65586d1e7a1ec035234ab"
+    },
+    {
+      "id": "3821023268",
+      "title": "Better Stats UI",
+      "description_excerpt": "Cleaner character effect lists, with the sources behind each bonus",
+      "tags": [
+        "mod",
+        "ui"
+      ],
+      "category": "ui",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3821023268",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "e264fc8ffeed186fabc4aaa6761f6d8ae4e9aee5c16de4718291b025739f87c9",
+      "feature_sha256": "fd7160428fbf91a3ba0b80eca1d49108bebde96f6b6b04bf59840806b10fae14"
+    },
+    {
+      "id": "3821066217",
+      "title": "Oldhammer: Classic Nagash",
+      "description_excerpt": "based on both his infamous 4e miniature",
+      "tags": [
+        "mod",
+        "graphical"
+      ],
+      "category": "visual",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3821066217",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "3170ad13d7ce5bcd25589957d4f385021e73d78340ba012310ef29efbd24cd53",
+      "feature_sha256": "75a4c659e2a6a318e9115087e89d49065fdc459426fa6cf640dfb2bb87b1e9fa"
+    },
+    {
+      "id": "3821351778",
+      "title": "Necromancer Hero – Extra Variants",
+      "description_excerpt": "Includes human, vampire, skeleton, Norscan and ghoul heads",
+      "tags": [
+        "mod",
+        "graphical"
+      ],
+      "category": "visual",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3821351778",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "b25de370c2bbf66758bf64e249111e26ab87752c4e26ef9d8d790dec6b3113c1",
+      "feature_sha256": "cce9fe588bfe8a8a42ec866d4085e6ea5a8cd90ec6c3b386ee3b2715798628db"
+    },
+    {
+      "id": "3821755595",
+      "title": "True Fire Whilst Moving",
+      "description_excerpt": "This only changes automatic fire while moving",
+      "tags": [
+        "mod",
+        "battle"
+      ],
+      "category": "battle",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3821755595",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "6fcdd227398453f46557f2dd20fa4d5b94e4e075ed52eb3f8400335383c6adf5",
+      "feature_sha256": "5ee5a13b2cb2f517d3e7ce50b05f0026aab546dabf44a40cab094a2de308006c"
+    },
+    {
+      "id": "3822187184",
+      "title": "Derpy's Third-Person Battles BETA ( Vanilla 9.X.X ) ( MCT )",
+      "description_excerpt": "Play one unit of a battle from behind, as a third-person action game",
+      "tags": [
+        "mod",
+        "battle"
+      ],
+      "category": "battle",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3822187184",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "f1c918c35f0ec4a01588b6430d3eda9fb69c34aa60eaaa1f30d8339c3e723800",
+      "feature_sha256": "27bf1fdcc78da40986a8017525116296e3162c5618e673c1e7f69453f3c8347a"
+    },
+    {
+      "id": "3822511375",
+      "title": "Stop Taking Detours to Climb Ladders！",
+      "description_excerpt": "your troops take a detour to a ladder",
+      "tags": [
+        "mod",
+        "battle"
+      ],
+      "category": "battle",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3822511375",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "39e99421fec4fba65fb26ef2dcd6348ac6663822cd8d63a63fcd6506cea70b05",
+      "feature_sha256": "9ee78608db77a39eba38f0a8fd781662f3334dac1a08f4f616a9ab295376f9a1"
+    },
+    {
+      "id": "3823180346",
+      "title": "Soul Pact X Champions of Chaos Compatibility",
+      "description_excerpt": "Soul Pact Unit Upgrades",
+      "tags": [
+        "mod",
+        "units"
+      ],
+      "category": "units",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3823180346",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "757ee070b6082c6b2c9b7ab956e9f7361e6f0f01d4adfb07d31ea1a7869c6fef",
+      "feature_sha256": "ff8dd7393506c837039ec5087059d591e6b51a0f8121acffa9c4a20fb5ce70d5"
+    },
+    {
+      "id": "3823226336",
+      "title": "【震旦宁和腐蚀】汉化+龙帝腐蚀提高",
+      "description_excerpt": "Cathay Harmony Corruption的汉化版",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "translation",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3823226336",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "0626eb2d90db6c69a9d27698a42305f6674f1ac0fdfa5a52399cf0de2aefa8fa",
+      "feature_sha256": "25da0a33bd027a71649a3bd3ac88e2c09bf4eebc0cd6cb0bb28359684af95219"
+    },
+    {
+      "id": "3823280996",
+      "title": "震旦更多精英兵种",
+      "description_excerpt": "九位精英",
+      "tags": [
+        "mod",
+        "units"
+      ],
+      "category": "units",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3823280996",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "90e63c5654f9a94aa8df277ce6553205285793196320ece8a5bdab0f107855d8",
+      "feature_sha256": "6e714e9eb918f6bc1a93a73e75289af5fa0cb24c7edf2c479f24b78a7b0bdff7"
+    },
+    {
+      "id": "3823348938",
+      "title": "Burn the City! - Houses Burn in Siege Battles",
+      "description_excerpt": "Siege battles set towns on fire.",
+      "tags": [
+        "mod",
+        "battle"
+      ],
+      "category": "battle",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3823348938",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "a2b3cc8c148f536a0b2f290feb1b6f814c4003c10e9850131fedf557140cb1b7",
+      "feature_sha256": "468616c53e310793eb68c4e03ddd19aaba50f62ca04f92bbcd539e0edf971f5a"
+    },
+    {
+      "id": "3823409841",
+      "title": "Bloodletting Momentum - Faster Khorne Recruitment",
+      "description_excerpt": "faster local and global recruitment, more recruitment capacity",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3823409841",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "9531ab15985e9e37ded37d62b09e78781b0ae5cbbcb9acc29c25151a3a4f5fc0",
+      "feature_sha256": "fa386d3fffc7cf92183f87b37a236e2698c254301e9ca3b94d3c1bdbbd25a1d5"
+    },
+    {
+      "id": "3823414891",
+      "title": "Wood Elves Vassalized Outposts",
+      "description_excerpt": "focus on the Magical Forests",
+      "tags": [
+        "mod",
+        "campaign"
+      ],
+      "category": "campaign",
+      "chinese_support": "unknown",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=3823414891",
+      "observed_at": "2026-10-20T12:45:20.187701Z",
+      "source_content_hash": "c01178c63fb313d72f3d63dd50ff1b1f86f83f14ae5ed7f0ab7aea79b7f01590",
+      "feature_sha256": "9537624a312ccaefdc227462aec10db006b56346797524616fcbc8cb62e68702"
+    }
+  ]
+}

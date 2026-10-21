@@ -1,6 +1,12 @@
 # ModSage 美术资产说明
 
-## 原创战役主视觉
+## 当前版本：v0.3 官方游戏画面
+
+当前页面已改用真实的《全面战争：战锤 3》官方宣传画和游戏截图，清单、来源与权利说明见 [game-media.md](game-media.md)。首页三组场景可手动切换，帝国、震旦和基斯里夫的官方画面同时承担派系搜索入口。移动端将画面与文案分区，避免角色主体被遮挡。各 Mod 卡片仍使用对应 Workshop 的真实预览。
+
+下方保留 v0.2 的生成插画制作记录。这张素材不再被当前页面引用，不能将它描述为真实战锤画面。
+
+## v0.2 历史原创战役主视觉
 
 - 文件：`apps/web/public/media/old-world-citadel-v2.webp`
 - 页面地址：`/media/old-world-citadel-v2.webp`
@@ -10,7 +16,7 @@
 - 创建日期：2026-10-20
 - 制作方式：内置 `image_gen__imagegen` 工具单次生成；网页使用 Next.js Image 已生成并经过页面验收的全尺寸 WebP 导出。没有改变插画构图或增删画面元素。
 - 来源：为本项目生成的原创画面；没有使用外部图片作为参考或复制官方宣传素材。画面不是游戏截图、官方宣传图或真实 Mod 预览图。
-- 用途：网站首页战役氛围背景；不用于证明 Mod 内容、推荐结果或游戏数据。
+- 历史用途：v0.2 网站首页战役氛围背景；不用于证明 Mod 内容、推荐结果或游戏数据。v0.3 已停止页面引用。
 
 ### 视觉方向与接入
 
@@ -30,6 +36,6 @@ Lighting and palette: diffuse warm parchment sunset breaking through the cloud b
 Constraints: image only; absolutely no words, lettering, pseudo-text, numbers, UI, borders, title, watermark, signature, official emblems or logos. No modern guns, tanks, science-fiction technology, modern buildings, photographic people, close-up faces or giant centered hero. Original artwork, no copied official promotional composition.
 ```
 
-### 人工检查
+### 生成后检查记录
 
 已检查生成图和项目中的网页资源：城堡、军旗、军阵及暮色光线可辨，左侧存在连续暗部；没有文字、界面元素或官方标识。图片按约定路径进入仓库，前端无需依赖临时生成目录。

@@ -60,17 +60,18 @@ svg { flex-shrink: 0; }
 .page-kicker { display: flex; align-items: center; gap: 18px; padding: 26px 0 20px; color: #a29173; font-size: 10px; letter-spacing: 2px; }
 .page-kicker > span:first-child { font-family: var(--latin); font-size: 10px; }
 .kicker-rule { height: 1px; flex: 1; background: linear-gradient(90deg,#58452c,#58452c40); }
-.hero { position: relative; overflow: hidden; min-height: 528px; border: 1px solid #735333; background: #1b1915; isolation: isolate; }
-.hero-painting { object-fit: cover; object-position: center 50%; z-index: -3; }
-.hero-shade { position: absolute; inset: 0; z-index: -2; background: linear-gradient(90deg,#13130ff5 0%,#181711e5 25%,#17150ec7 37%,#19130d61 57%,transparent 77%), linear-gradient(0deg,#100e0ca6,transparent 45%); }
+.hero { position: relative; overflow: hidden; min-height: 530px; border: 1px solid #735333; background: #10151b; isolation: isolate; display: flex; align-items: center; }
+.hero-art { position: absolute; inset: 0 0 0 auto; width: 80%; z-index: 0; }
+.hero-painting { object-fit: cover; }
+.hero-shade { position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg,#10151b 0%,#10151bf2 25%,#10151bbd 37%,#10151b42 52%,transparent 65%),linear-gradient(0deg,#0c10176b,transparent 32%); }
 .hero::after { content: ""; position: absolute; inset: 7px; border: 1px solid #c5a36a30; z-index: 2; pointer-events: none; }
-.hero-content { position: relative; max-width: 680px; padding: 52px 0 48px 52px; }
+.hero-content { position: relative; z-index: 2; width: 53%; max-width: 670px; padding: 48px 0 52px 47px; }
 .hero-label { display: inline-flex; align-items: center; gap: 12px; color: var(--gold-bright); font-size: 11px; letter-spacing: 3px; }
 .hero-label > span { width: 23px; height: 1px; background: var(--gold); position: relative; }
 .hero-label > span::before { content: ""; width: 5px; height: 5px; background: var(--gold); transform: rotate(45deg); position: absolute; left: 0; top: -2px; }
-.hero h1 { font-size: clamp(36px,4.1vw,58px); line-height: 1.52; letter-spacing: 2px; font-weight: 700; margin-top: 21px; color: #f4e7c9; text-shadow: 0 2px 18px #0006; }
+.hero h1 { font-size: clamp(36px,3.85vw,54px); line-height: 1.5; letter-spacing: 1px; font-weight: 700; margin-top: 21px; color: #f6ecd5; text-shadow: 0 2px 18px #0006; }
 .hero h1 span { color: #dfbc80; }
-.hero-content > p { color: #c2b9a3; font-size: 13px; line-height: 2; letter-spacing: .5px; margin-top: 18px; }
+.hero-content > p { color: #d0c9b9; font-size: 13px; line-height: 2; letter-spacing: .5px; margin-top: 18px; }
 .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 29px; }
 .button { position: relative; border: 1px solid transparent; min-height: 44px; padding: 12px 18px; border-radius: 1px; display: inline-flex; justify-content: center; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; line-height: 1.5; transition: background .18s, border-color .18s, box-shadow .18s; }
 .button svg { width: 17px; height: 17px; }
@@ -84,9 +85,13 @@ svg { flex-shrink: 0; }
 .full-width { width: 100%; }
 .hero-footnote { display: flex; align-items: center; gap: 8px; margin-top: 26px; font-size: 10px; color: #a6987f; letter-spacing: 1px; }
 .hero-footnote svg { width: 15px; height: 15px; color: #b49765; }
-.hero-caption { position: absolute; right: 36px; bottom: 30px; text-align: right; font-family: var(--latin); color: #e0bf89; text-shadow: 0 2px 4px #000; }
-.hero-caption > span { font-size: 14px; letter-spacing: 4px; }
-.hero-caption small { display: block; font-size: 7px; letter-spacing: 2.5px; margin-top: 5px; color: #c1b49a; }
+.hero-caption { position: absolute; z-index: 2; right: 29px; bottom: 25px; text-align: right; color: #f1dfbd; text-shadow: 0 2px 6px #000; }
+.hero-caption > span { display: block; font-family: var(--latin); font-size: 10px; letter-spacing: 3px; }
+.hero-caption strong { display: block; font-family: var(--serif); font-weight: 500; font-size: 18px; letter-spacing: 2px; margin: 5px 0 9px; }
+.hero-caption a { display: inline-flex; align-items: center; gap: 6px; color: #d3c8b4; font-size: 9px; border-bottom: 1px solid #cebb8f75; padding-bottom: 3px; }
+.hero-caption a:hover { color: #fff1cf; }
+.hero-caption a svg { width: 11px; height: 11px; }
+
 .hero-corner { position: absolute; width: 28px; height: 28px; pointer-events: none; }
 .corner-tl { left: 4px; top: 4px; border-top: 2px solid #bd975a; border-left: 2px solid #bd975a; }
 .corner-br { right: 4px; bottom: 4px; border-bottom: 2px solid #bd975a; border-right: 2px solid #bd975a; }
@@ -441,16 +446,90 @@ svg { flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes shimmer { 100% { background-position: -200% 0; } }
 
+/* Official game imagery is kept distinct from author-provided Mod previews. */
+.battlefield-switcher { display: grid; grid-template-columns: 176px repeat(3,minmax(0,1fr)); border: 1px solid #665137; border-top: 0; background: #15181c; }
+.battlefield-label { align-self: center; padding: 14px 24px; color: #c4af87; font-family: var(--serif); font-size: 12px; letter-spacing: 1px; }
+.battlefield-label small { display: block; font-family: var(--latin); color: #84755e; font-size: 7px; letter-spacing: 1px; margin-top: 4px; }
+.battlefield-switcher button { position: relative; display: flex; align-items: center; min-width: 0; gap: 14px; border: 0; border-left: 1px solid #443b30; background: transparent; padding: 14px; text-align: left; color: #bdb3a2; }
+.battlefield-switcher button:hover { background: #262b31; }
+.battlefield-switcher button.selected { background: #26303a; color: #f1dfba; }
+.battlefield-switcher button.selected::after { content: ""; position: absolute; bottom: 0; left: 14px; right: 14px; height: 2px; background: var(--gold); }
+.scene-thumbnail { position: relative; display: block; width: 72px; height: 45px; flex-shrink: 0; overflow: hidden; border: 1px solid #7d6946; }
+.scene-thumbnail img { object-fit: cover; }
+.battlefield-switcher button > span:nth-child(2) { min-width: 0; }
+.battlefield-switcher button small { display: block; font-family: var(--latin); color: #958367; font-size: 9px; margin-bottom: 2px; }
+.battlefield-switcher button strong { display: block; font-family: var(--serif); font-weight: 500; font-size: 12px; letter-spacing: .5px; }
+.battlefield-switcher button > svg { margin-left: auto; width: 14px; height: 14px; color: #b19462; }
+.faction-section { margin-top: 37px; }
+.faction-section .section-heading { margin-bottom: 21px; }
+.faction-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px; }
+.faction-card { position: relative; min-height: 314px; border: 1px solid #79613e; overflow: hidden; background: #172029; isolation: isolate; }
+.faction-art { position: absolute; inset: 0; z-index: -2; }
+.faction-art img { object-fit: cover; transition: transform .35s; }
+.faction-card::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg,#0d1219 0%,#0d1219c9 19%,#0d121930 47%,transparent 66%); }
+.faction-card:hover { border-color: #c1a16b; }
+.faction-card:hover .faction-art img { transform: scale(1.035); }
+.faction-card:focus-visible { outline-offset: 4px; }
+.faction-source { position: absolute; top: 13px; left: 14px; color: #d7d2c7; background: #10151bc4; border: 1px solid #c0ad883d; padding: 3px 7px; font-size: 8px; letter-spacing: .5px; }
+.faction-copy { position: absolute; left: 24px; right: 24px; bottom: 21px; }
+.faction-copy .eyebrow { font-size: 8px; letter-spacing: 2px; color: #d2ba89; }
+.faction-copy h3 { color: #f5e8cc; font-size: 29px; font-weight: 500; line-height: 1.4; letter-spacing: 3px; margin-top: 3px; }
+.faction-copy p { font-size: 10px; color: #c0b9ab; margin-top: 7px; }
+.faction-action { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #b99a5c50; margin-top: 17px; padding-top: 11px; color: #d9bd8b; font-size: 10px; }
+.faction-action svg { width: 16px; height: 16px; }
+.game-media-note { display: flex; align-items: center; justify-content: space-between; gap: 15px; font-size: 9px; color: #a18d6c; margin-top: 12px; line-height: 1.8; }
+.game-media-note a { display: flex; align-items: center; flex-shrink: 0; gap: 5px; color: #c6a46e; }
+.game-media-note svg { width: 11px; height: 11px; }
+.game-media-credits { max-width: 660px; }
+.game-media-credits a { color: #b49a71; text-decoration: underline; text-underline-offset: 3px; }
+.page-heading.campaign-heading { min-height: 248px; margin-top: 32px; padding: 36px; overflow: hidden; isolation: isolate; border: 1px solid #665038; background: #12171e; }
+.campaign-heading-art { position: absolute; inset: 0 0 0 auto; width: 61%; z-index: -2; }
+.campaign-heading-art img { object-fit: cover; }
+.campaign-heading-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg,#12171e 5%,#12171ef2 35%,#12171e85 58%,transparent 79%),linear-gradient(0deg,#11161b61,transparent 50%); }
+.campaign-heading-copy { max-width: 74%; }
+.campaign-heading h1 { font-size: clamp(26px,2.8vw,38px); text-shadow: 0 2px 9px #0006; }
+.campaign-heading p { max-width: 580px; color: #c0b7a4; }
+.campaign-source { display: inline-flex; align-items: center; gap: 5px; position: absolute; right: 18px; bottom: 15px; color: #d4c7ad; font-size: 8px; padding: 3px 6px; background: #10151ba6; }
+.campaign-source svg { width: 10px; height: 10px; }
+.matching-evidence { margin-top: 18px; border: 1px solid #5e4b30; font-size: 10px; }
+.matching-evidence summary, .retrieval-summary summary { display: flex; align-items: center; gap: 7px; list-style: none; cursor: pointer; color: #cfb58a; padding: 11px 12px; }
+.matching-evidence summary::-webkit-details-marker, .retrieval-summary summary::-webkit-details-marker { display: none; }
+.matching-evidence summary > svg, .retrieval-summary summary > svg { width: 13px; height: 13px; }
+.matching-evidence summary > svg:last-child, .retrieval-summary summary > svg:last-child { margin-left: auto; }
+.matching-evidence[open] summary > svg:last-child, .retrieval-summary[open] summary > svg:last-child { transform: rotate(90deg); }
+.matching-evidence > div { padding: 0 12px 12px; }
+.matching-channels, .matched-terms { display: flex; flex-wrap: wrap; gap: 6px; margin: 7px 0 11px; }
+.matching-channels span { color: #d5be93; font-size: 9px; border-bottom: 1px solid #aa885158; padding-bottom: 3px; }
+.matched-terms span { color: #c2b299; background: #32291d; padding: 2px 7px; overflow-wrap: anywhere; }
+.matching-evidence p { color: #b19c7a; line-height: 1.9; }
+.matching-evidence .matching-note { font-size: 9px; color: #938062; }
+.retrieval-summary { margin: 17px 0; border: 1px solid #4b402f; background: #201d18; font-size: 11px; }
+.retrieval-summary > div { padding: 0 13px 13px; color: #a89980; }
+.retrieval-summary dl { display: flex; flex-wrap: wrap; gap: 16px 30px; margin: 12px 0 0; }
+.retrieval-summary dt { color: #918068; font-size: 9px; }
+.retrieval-summary dd { color: #d0b98e; margin: 4px 0 0; }
+
 @media (min-width: 1600px) {
   .hero { min-height: 560px; }
   .hero-content { padding-top: 62px; }
 }
 @media (max-width: 1190px) {
+  .battlefield-switcher { grid-template-columns: 144px repeat(3,minmax(0,1fr)); }
+  .battlefield-label { padding: 12px 16px; font-size: 11px; }
+  .battlefield-switcher button { gap: 10px; padding: 12px; }
+  .scene-thumbnail { width: 59px; height: 42px; }
+  .battlefield-switcher button strong { font-size: 11px; }
+  .battlefield-switcher button > svg { display: none; }
+  .faction-card { min-height: 285px; }
+  .faction-copy { left: 20px; right: 20px; bottom: 18px; }
+  .faction-copy h3 { font-size: 26px; }
+  .page-heading.campaign-heading { padding: 30px; }
+
   .header-inner, .header-masthead { padding-left: 32px; padding-right: 32px; }
   .page-shell { padding-left: 32px; padding-right: 32px; }
   .main-nav a { min-width: 92px; padding-left: 12px; padding-right: 12px; }
-  .hero-content { padding-left: 39px; }
-  .hero h1 { font-size: 48px; }
+  .hero-content { padding-left: 34px; width: 55%; }
+  .hero h1 { font-size: 45px; }
   .hero-caption { right: 25px; bottom: 23px; }
   .stat-strip { padding-left: 20px; padding-right: 20px; grid-template-columns: .85fr .85fr 1.4fr 1.3fr; }
   .stat-strip > div { padding: 0 18px; gap: 10px; }
@@ -478,6 +557,19 @@ svg { flex-shrink: 0; }
   .site-footer > a { display: none; }
 }
 @media (max-width: 950px) {
+  .battlefield-switcher { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .battlefield-label { display: none; }
+  .battlefield-switcher button:first-of-type { border-left: 0; }
+  .faction-grid { gap: 16px; }
+  .faction-card { min-height: 266px; }
+  .faction-copy { left: 17px; right: 17px; }
+  .faction-copy h3 { font-size: 24px; }
+  .faction-copy p { font-size: 9px; }
+  .faction-source { left: 10px; right: 10px; font-size: 7px; text-align: center; }
+  .page-heading.campaign-heading { min-height: 236px; }
+  .campaign-heading-copy { max-width: 85%; }
+  .campaign-heading p { max-width: 440px; font-size: 11px; }
+
   .header-masthead > span:first-child { font-size: 8px; letter-spacing: 1.5px; }
   .header-masthead > span:last-child { font-size: 9px; }
   .header-inner { gap: 15px; }
@@ -489,12 +581,13 @@ svg { flex-shrink: 0; }
   .main-nav a { min-width: 82px; font-size: 12px; padding-left: 10px; padding-right: 10px; }
   .collection-link { gap: 7px; font-size: 11px; }
   .hero { min-height: 510px; }
-  .hero-content { padding: 47px 30px; }
+  .hero-content { width: 63%; padding: 41px 28px; }
   .hero h1 { font-size: 43px; }
-  .hero-shade { background: linear-gradient(90deg,#13130fee 0%,#181711dc 30%,#17150eaa 50%,#19130d30 100%),linear-gradient(0deg,#100e0ca6,transparent 45%); }
+  .hero-shade { background: linear-gradient(90deg,#10151bf5 0%,#10151bde 31%,#10151b89 50%,transparent 72%),linear-gradient(0deg,#0c10176b,transparent 32%); }
   .hero-content > p { font-size: 12px; }
-  .hero-caption > span { font-size: 11px; }
-  .hero-caption small { font-size: 6px; letter-spacing: 1.5px; }
+  .hero-caption > span { font-size: 8px; letter-spacing: 2px; }
+  .hero-caption strong { font-size: 13px; margin: 3px 0 5px; }
+  .hero-caption a { font-size: 8px; }
   .stat-strip { grid-template-columns: 1fr 1fr 1.5fr; padding: 19px 18px; }
   .stat-strip > div:nth-child(3) { border-right: 0; padding-right: 0; }
   .stat-strip .stat-source { display: none; }
@@ -543,6 +636,29 @@ svg { flex-shrink: 0; }
   .saved-row .icon-button { min-width: 30px; min-height: 34px; }
 }
 @media (max-width: 720px) {
+  .battlefield-switcher button { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 9px 13px; }
+  .scene-thumbnail { width: 100%; height: 56px; }
+  .battlefield-switcher button small { display: none; }
+  .battlefield-switcher button strong { font-size: 10px; text-align: center; letter-spacing: 0; }
+  .battlefield-switcher button.selected::after { left: 9px; right: 9px; }
+  .faction-grid { grid-template-columns: minmax(0,1fr); gap: 19px; }
+  .faction-card { min-height: 284px; }
+  .faction-copy { left: 23px; right: 23px; bottom: 21px; }
+  .faction-copy h3 { font-size: 28px; }
+  .faction-copy p { font-size: 10px; }
+  .faction-source { left: 14px; right: auto; font-size: 8px; }
+  .faction-action { margin-top: 14px; }
+  .game-media-note { flex-wrap: wrap; font-size: 9px; gap: 6px; }
+  .game-media-note a { margin-left: auto; }
+  .page-heading.campaign-heading { display: block; min-height: 0; margin-top: 24px; padding: 176px 23px 27px; }
+  .campaign-heading-art { inset: 0 0 auto; width: 100%; height: 235px; }
+  .campaign-heading-shade { background: linear-gradient(0deg,#12171e 0%,#12171ef2 35%,#12171e55 66%,transparent 88%); }
+  .campaign-heading-copy { max-width: 100%; }
+  .campaign-heading h1 { font-size: 28px; }
+  .campaign-heading p { color: #c4b9a5; }
+  .campaign-source { top: 14px; right: 14px; bottom: auto; }
+  .retrieval-summary { font-size: 10px; }
+
   .header-masthead { padding: 7px 20px; justify-content: center; }
   .header-masthead > span:first-child { font-size: 8px; letter-spacing: 2px; }
   .header-masthead > span:last-child { display: none; }
@@ -559,10 +675,11 @@ svg { flex-shrink: 0; }
   .page-shell { padding: 0 20px 57px; }
   .page-kicker { padding: 23px 0 17px; font-size: 9px; letter-spacing: 1px; gap: 13px; }
   .page-kicker > span:first-child { font-size: 9px; letter-spacing: 1.4px; }
-  .hero { min-height: 590px; }
-  .hero-painting { object-position: 66% 50%; }
-  .hero-shade { background: linear-gradient(90deg,#15130bb0,#15130b20),linear-gradient(0deg,#15130ff5 3%,#15130fe8 27%,#15130faa 54%,#15130f10 100%); }
-  .hero-content { padding: 185px 27px 37px; max-width: none; }
+  .hero { min-height: 0; display: block; }
+  .hero-art { width: 100%; height: 285px; inset: 0 0 auto; }
+
+  .hero-shade { height: 300px; bottom: auto; background: linear-gradient(0deg,#10151b 2%,#10151b5c 21%,transparent 50%); }
+  .hero-content { width: 100%; padding: 286px 27px 29px; max-width: none; }
   .hero-label { font-size: 9px; letter-spacing: 2px; }
   .hero h1 { font-size: clamp(33px,6.6vw,47px); margin-top: 14px; line-height: 1.45; letter-spacing: 1px; }
   .hero-content > p { font-size: 11px; line-height: 1.9; margin-top: 14px; color: #cbbda2; }
@@ -570,9 +687,10 @@ svg { flex-shrink: 0; }
   .hero-actions .button { font-size: 11px; padding: 12px 14px; }
   .hero-actions .button svg { width: 14px; height: 14px; }
   .hero-footnote { margin-top: 20px; font-size: 9px; gap: 6px; letter-spacing: .5px; }
-  .hero-caption { top: 22px; left: 25px; right: auto; bottom: auto; text-align: left; opacity: .85; }
-  .hero-caption > span { font-size: 10px; letter-spacing: 3px; }
-  .hero-caption small { font-size: 6px; letter-spacing: 1.5px; }
+  .hero-caption { top: 19px; left: auto; right: 20px; bottom: auto; text-align: right; }
+  .hero-caption > span { font-size: 8px; letter-spacing: 2px; }
+  .hero-caption strong { font-size: 13px; margin: 3px 0 5px; }
+  .hero-caption a { font-size: 8px; }
   .stat-strip { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 17px 20px; row-gap: 17px; }
   .stat-strip > div { padding: 0 10px; gap: 12px; }
   .stat-strip > div:first-child { padding-left: 0; }
@@ -681,6 +799,15 @@ svg { flex-shrink: 0; }
   .footer-note { font-size: 8px; line-height: 2; }
 }
 @media (max-width: 480px) {
+  .battlefield-switcher button strong { font-size: 9px; line-height: 1.6; }
+  .scene-thumbnail { height: 49px; }
+  .faction-card { min-height: 272px; }
+  .page-heading.campaign-heading { padding: 164px 20px 24px; }
+  .campaign-heading-art { height: 220px; }
+  .campaign-heading h1 { font-size: 27px; }
+  .matching-evidence { font-size: 11px; }
+  .matching-evidence .matching-note { font-size: 10px; }
+
   .header-inner { padding-left: 16px; padding-right: 16px; }
   .brand-mark { width: 43px; height: 43px; }
   .brand { gap: 7px; }
@@ -691,8 +818,9 @@ svg { flex-shrink: 0; }
   .page-shell { padding-left: 16px; padding-right: 16px; }
   .page-kicker { font-size: 8px; gap: 10px; }
   .page-kicker > span:first-child { font-size: 8px; letter-spacing: 1.1px; }
-  .hero { min-height: 570px; }
-  .hero-content { padding: 177px 22px 29px; }
+  .hero-art { height: 244px; }
+  .hero-shade { height: 257px; }
+  .hero-content { padding: 250px 22px 25px; }
   .hero h1 { font-size: 35px; letter-spacing: .5px; }
   .hero-content > p { font-size: 10px; }
   .hero-actions { gap: 9px; }

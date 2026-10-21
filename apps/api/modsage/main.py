@@ -84,6 +84,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "version": __version__,
             "database": "ok",
             "llm_configured": settings.llm_configured,
+            "embedding_configured": settings.embedding_configured,
+            "retrieval_mode": settings.retrieval_mode,
             "steam_discovery_configured": bool(settings.steam_api_key),
         }
 

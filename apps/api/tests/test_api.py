@@ -60,6 +60,25 @@ def test_popular_does_not_treat_missing_counts_as_zero(client, item_factory):
     assert [m["id"] for m in result["items"]] == ["10002"]
 
 
+def test_catalog_search_keeps_chinese_summary_only_matches(client, item_factory):
+    from modsage.models import Mod
+
+    with client.app.state.session_factory.begin() as session:
+        import_items(
+            session,
+            [
+                item_factory(
+                    title="Treaty Adjustments",
+                    tags=["Campaign"],
+                    description="Changes diplomacy and negotiations.",
+                )
+            ],
+        )
+        session.get(Mod, "10001").summary_zh = "调整盟友的外交关系。"
+    result = client.get("/api/v1/mods", params={"q": "外交", "sort": "relevant"}).json()
+    assert [item["id"] for item in result["items"]] == ["10001"]
+
+
 def test_recommendations_and_runs_are_persisted(client, item_factory):
     with client.app.state.session_factory.begin() as session:
         import_items(session, [item_factory()])

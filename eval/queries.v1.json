@@ -1,0 +1,348 @@
+{
+  "schema_version": 1,
+  "dataset_id": "workshop-excerpts-20261020-v1",
+  "label_policy": "Development judgments authored from titles and source descriptions before scoring. Not independent human annotations; relevant only to this frozen excerpt corpus. Grade 2 direct relevance, grade 1 related result, other documents unjudged and scored as 0. Regression split is fixed regression coverage, not an untouched statistical holdout.",
+  "queries": [
+    {
+      "id": "q01",
+      "split": "development",
+      "query": "震旦将领卫队坐骑",
+      "expected": "answerable",
+      "qrels": {
+        "2862938097": 2,
+        "3031564620": 2
+      },
+      "forbidden_ids": [
+        "3816273830",
+        "3810707862"
+      ],
+      "rationale": "两条记录均直接描述震旦将领的卫队或坐骑扩展；其他派系卫队不满足阵营要求。"
+    },
+    {
+      "id": "q02",
+      "split": "development",
+      "query": "震旦更多精英兵种，不要大修",
+      "expected": "answerable",
+      "qrels": {
+        "3823280996": 2
+      },
+      "forbidden_ids": [
+        "2791750313",
+        "2791750896",
+        "3135224876",
+        "3262628260"
+      ],
+      "rationale": "标题明确对应震旦精英兵种；大修内容属于硬排除。"
+    },
+    {
+      "id": "q03",
+      "split": "development",
+      "query": "帝国，兵种保持原版，只改兵种外观",
+      "expected": "answerable",
+      "qrels": {
+        "3439962318": 2
+      },
+      "forbidden_ids": [
+        "2862938097",
+        "3031564620",
+        "3823280996",
+        "3816273830"
+      ],
+      "rationale": "帝国 reskin 条目提供外观改动；其他派系兵种扩展不满足条件。"
+    },
+    {
+      "id": "q04",
+      "split": "development",
+      "query": "Vampire hero skill trees",
+      "expected": "answerable",
+      "qrels": {
+        "3054236428": 2
+      },
+      "forbidden_ids": [
+        "3816273830"
+      ],
+      "rationale": "指定吸血鬼英雄技能树，阵营未明确的合集不作为同等已确认结果。"
+    },
+    {
+      "id": "q05",
+      "split": "development",
+      "query": "高等精灵英雄合集",
+      "expected": "answerable",
+      "qrels": {
+        "3816273830": 2
+      },
+      "forbidden_ids": [
+        "3810707862",
+        "3054236428"
+      ],
+      "rationale": "高等精灵英雄集合，与吸血鬼英雄合集区分。"
+    },
+    {
+      "id": "q06",
+      "split": "development",
+      "query": "想要改善界面的数值显示",
+      "expected": "answerable",
+      "qrels": {
+        "3821023268": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "Better Stats UI 的标题、标签与短摘录均指向角色数值界面。"
+    },
+    {
+      "id": "q07",
+      "split": "development",
+      "query": "LOD 远景细节",
+      "expected": "answerable",
+      "qrels": {
+        "2858955442": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "指定 LOD 与细节距离，区别于一般重着色。"
+    },
+    {
+      "id": "q08",
+      "split": "development",
+      "query": "Oldhammer Classic Nagash",
+      "expected": "answerable",
+      "qrels": {
+        "3821066217": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "指定经典纳迦什外观条目。"
+    },
+    {
+      "id": "q09",
+      "split": "development",
+      "query": "Third-person battles",
+      "expected": "answerable",
+      "qrels": {
+        "3822187184": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "指定第三人称操作战斗。"
+    },
+    {
+      "id": "q10",
+      "split": "development",
+      "query": "大修 Radious Part 1",
+      "expected": "answerable",
+      "qrels": {
+        "2791750313": 2,
+        "2791750896": 1,
+        "3135224876": 1
+      },
+      "forbidden_ids": [],
+      "rationale": "第一部分是直接匹配，其余是同系列或基于该大修的关联条目。"
+    },
+    {
+      "id": "q11",
+      "split": "development",
+      "query": "矮人深邃建筑",
+      "expected": "answerable",
+      "qrels": {
+        "3572707881": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "标题和摘录均明确指出矮人深邃建筑。"
+    },
+    {
+      "id": "q12",
+      "split": "development",
+      "query": "必须有汉化的帝国火炮模组",
+      "expected": "no_answer",
+      "qrels": {},
+      "forbidden_ids": [],
+      "rationale": "冻结语料的游戏内中文状态全部为 unknown；不能满足必须汉化。"
+    },
+    {
+      "id": "q13",
+      "split": "development",
+      "query": "霓虹赛博摩托竞速",
+      "expected": "no_answer",
+      "qrels": {},
+      "forbidden_ids": [],
+      "rationale": "冻结语料中没有该题材，不能以任意热门模组补位。"
+    },
+    {
+      "id": "q14",
+      "split": "development",
+      "query": "爆炸摧毁战场树木",
+      "expected": "answerable",
+      "qrels": {
+        "3820906068": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "作者短摘录说明爆炸可以摧毁树木；用于观察中文改述跨语言召回缺口。"
+    },
+    {
+      "id": "q15",
+      "split": "regression",
+      "query": "Cathay bodyguard mount",
+      "expected": "answerable",
+      "qrels": {
+        "3031564620": 2,
+        "2862938097": 2
+      },
+      "forbidden_ids": [
+        "3816273830",
+        "3810707862"
+      ],
+      "rationale": "中英两个震旦将领卫队版本，跨派系扩展不得混入。"
+    },
+    {
+      "id": "q16",
+      "split": "regression",
+      "query": "Bretonnia infantry roster without overhaul",
+      "expected": "answerable",
+      "qrels": {
+        "3820672770": 2
+      },
+      "forbidden_ids": [
+        "2791750313",
+        "2791750896",
+        "3135224876",
+        "3262628260"
+      ],
+      "rationale": "巴托尼亚步战阵容是直接结果；大型重做属于硬排除。"
+    },
+    {
+      "id": "q17",
+      "split": "regression",
+      "query": "鼠人 Rat Ogre",
+      "expected": "answerable",
+      "qrels": {
+        "3819817443": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "鼠人鼠巨魔外观变体，不把标题中的 units 标签解释为新增兵种保证。"
+    },
+    {
+      "id": "q18",
+      "split": "regression",
+      "query": "Empire Elector Count，不要大修",
+      "expected": "answerable",
+      "qrels": {
+        "3819675091": 2
+      },
+      "forbidden_ids": [
+        "2791750313",
+        "2791750896",
+        "3135224876",
+        "3262628260"
+      ],
+      "rationale": "帝国选帝侯扩展的标题与短摘录直接对应；大修须排除。"
+    },
+    {
+      "id": "q19",
+      "split": "regression",
+      "query": "No Knockdown Invincibility",
+      "expected": "answerable",
+      "qrels": {
+        "3820224735": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "倒地无敌调整的精确名称检索。"
+    },
+    {
+      "id": "q20",
+      "split": "regression",
+      "query": "Wood Elves outposts",
+      "expected": "answerable",
+      "qrels": {
+        "3823414891": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "木精灵哨站管理条目。"
+    },
+    {
+      "id": "q21",
+      "split": "regression",
+      "query": "faster Khorne recruitment",
+      "expected": "answerable",
+      "qrels": {
+        "3823409841": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "恐虐补员招募速度与容量是标题及短摘录指明的内容。"
+    },
+    {
+      "id": "q22",
+      "split": "regression",
+      "query": "Malekith Morathi start together",
+      "expected": "answerable",
+      "qrels": {
+        "3336408550": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "指定两位领主一起开局，区别于其他起始位置改动。"
+    },
+    {
+      "id": "q23",
+      "split": "regression",
+      "query": "Vortex campaign Immortal Empires",
+      "expected": "answerable",
+      "qrels": {
+        "3819497630": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "超凡帝国的大漩涡战役，Immortal Empires 不是帝国派系约束。"
+    },
+    {
+      "id": "q24",
+      "split": "regression",
+      "query": "震旦宁和腐蚀汉化",
+      "expected": "answerable",
+      "qrels": {
+        "3823226336": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "名称与来源短摘录指向汉化条目；该需求未要求经过独立验证的中文状态。"
+    },
+    {
+      "id": "q25",
+      "split": "regression",
+      "query": "吸血鬼，兵种保持原版，只改英雄外观",
+      "expected": "answerable",
+      "qrels": {
+        "3821351778": 2
+      },
+      "forbidden_ids": [
+        "3810707862",
+        "3816273830",
+        "3823280996"
+      ],
+      "rationale": "死灵法师视觉变体的短摘录包含 vampire；新增兵种类条目不符合排除项。"
+    },
+    {
+      "id": "q26",
+      "split": "regression",
+      "query": "基斯里夫新增兵种，不要大修",
+      "expected": "no_answer",
+      "qrels": {},
+      "forbidden_ids": [],
+      "rationale": "冻结短摘录语料没有可确认的基斯里夫兵种条目；这是语料覆盖无答案，不能推断全工坊无结果。"
+    },
+    {
+      "id": "q27",
+      "split": "regression",
+      "query": "火攻城镇 siege battles",
+      "expected": "answerable",
+      "qrels": {
+        "3823348938": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "城镇房屋燃烧的战斗改动，与树木爆破区分。"
+    },
+    {
+      "id": "q28",
+      "split": "regression",
+      "query": "让弓箭手边走边射时分散目标",
+      "expected": "answerable",
+      "qrels": {
+        "3821755595": 2
+      },
+      "forbidden_ids": [],
+      "rationale": "作者描述移动射击目标分配，用于观察中文改述跨语言召回缺口。"
+    }
+  ]
+}

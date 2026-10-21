@@ -49,6 +49,19 @@ class Mod(Base):
     evidence: Mapped[list] = mapped_column(JSON, default=list)
 
 
+class ModEmbedding(Base):
+    """One current document vector per provider/model/dimension namespace."""
+
+    __tablename__ = "mod_embeddings"
+    mod_id: Mapped[str] = mapped_column(ForeignKey("mods.id"), primary_key=True)
+    namespace: Mapped[str] = mapped_column(String(64), primary_key=True)
+    document_hash: Mapped[str] = mapped_column(String(64))
+    model: Mapped[str] = mapped_column(String(200))
+    dimensions: Mapped[int] = mapped_column(Integer)
+    vector: Mapped[list] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class SourceSnapshot(Base):
     __tablename__ = "source_snapshots"
     __table_args__ = (UniqueConstraint("mod_id", "payload_hash"),)

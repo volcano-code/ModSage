@@ -1,6 +1,6 @@
 PYTHON ?= .venv/bin/python
 
-.PHONY: setup api web worker worker-once jobs enqueue-refresh test lint build init-db discover discover-public digest
+.PHONY: setup api web worker worker-once jobs enqueue-refresh embed embedding-status evaluate test lint build init-db discover discover-public digest
 
 setup:
 	python3 -m venv .venv
@@ -37,6 +37,15 @@ discover-public:
 
 digest:
 	$(PYTHON) -m modsage.cli digest
+
+embed:
+	$(PYTHON) -m modsage.cli embed --limit 20 --batch-size 8
+
+embedding-status:
+	$(PYTHON) -m modsage.cli embedding-status
+
+evaluate:
+	$(PYTHON) scripts/evaluate_retrieval.py
 
 test:
 	$(PYTHON) -m pytest apps/api/tests

@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { api, workshopUrl } from "@/lib/api";
 import { toggleSaved, useSavedMods } from "@/lib/saved";
 import type { Validation } from "@/lib/types";
-import { Icon, Mark } from "./icons";
+import { Icon } from "./icons";
+import { CampaignBanner } from "./game-media";
 import { EmptyState, ErrorNotice } from "./ui";
 
 export function Collection() {
@@ -42,7 +43,7 @@ export function Collection() {
   }
 
   return <>
-    <div className="page-heading"><div><span className="eyebrow">THE MUSTER ROLL · 我的清单</span><h1>集结模组，准备下一场远征。</h1><p>收集心仪的内容，核对已知前置。清单保存在当前浏览器，可随时导出 Workshop 链接。</p></div><Mark className="page-crest"/></div>
+    <CampaignBanner scene="kislev" eyebrow="THE MUSTER ROLL · 我的清单" title="集结模组，准备下一场远征。" description="收集心仪的内容，核对已知前置。清单保存在当前浏览器，可随时导出 Workshop 链接。"/>
     <div className="collection-toolbar"><div><Icon name="bookmark"/><strong>{saved.length}</strong><span>个已保存模组</span><span className="mode-badge">本机清单</span></div><div><button className="button button-quiet" disabled={!saved.length} onClick={download}><Icon name="download"/>导出链接</button><button className="button button-gold" disabled={!saved.length || busy} onClick={validate}><Icon name={busy ? "refresh" : "shield"} className={busy ? "spinning" : ""}/>{busy ? "正在检查" : "检查已知前置"}</button></div></div>
     {message && <p className="source-note" role="status">{message}</p>}
     {error && <ErrorNotice message={error}/>}

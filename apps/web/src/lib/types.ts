@@ -58,6 +58,8 @@ export interface Health {
   database: string;
   llm_configured: boolean;
   steam_discovery_configured: boolean;
+  embedding_configured?: boolean;
+  retrieval_mode?: "bm25" | "hybrid";
 }
 
 export interface SyncStatus {
@@ -94,6 +96,12 @@ export interface Recommendation {
   score: number;
   reasons: string[];
   caveats: string[];
+  retrieval?: {
+    lexical_score: number;
+    semantic_score: number | null;
+    matched_terms: string[];
+    channels: ("lexical" | "semantic")[];
+  };
 }
 
 export interface RecommendationRun {
@@ -103,6 +111,14 @@ export interface RecommendationRun {
   constraints: Record<string, unknown>;
   items: Recommendation[];
   warnings: string[];
+  retrieval?: {
+    method: "bm25" | "hybrid_rrf";
+    requested_method: "bm25" | "hybrid_rrf";
+    candidate_count: number;
+    eligible_count: number;
+    indexed_count: number;
+    stale_count: number;
+  };
 }
 
 export interface Validation {

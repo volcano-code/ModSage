@@ -4,7 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useRemote } from "@/lib/use-remote";
 import type { ModPage } from "@/lib/types";
-import { Icon, Mark } from "./icons";
+import { Icon } from "./icons";
+import { CampaignBanner } from "./game-media";
 import { ModCard } from "./mod-card";
 import { EmptyState, ErrorNotice, LoadingCards } from "./ui";
 
@@ -32,7 +33,7 @@ export function Explore() {
   }
 
   return <>
-    <div className="page-heading"><div><span className="eyebrow">THE GREAT ARCHIVE · 模组档案</span><h1>翻开旧世界的模组档案。</h1><p>从兵种到战役，从细节到重塑。循着你的兴趣，找到值得带上战场的改动。</p></div><Mark className="page-crest"/></div>
+    <CampaignBanner scene="empire" eyebrow="THE GREAT ARCHIVE · 模组档案" title="翻开旧世界的模组档案。" description="从兵种到战役，从细节到重塑。循着你的兴趣，找到值得带上战场的改动。"/>
     <form className="search-form" onSubmit={(event) => { event.preventDefault(); navigate({ q: draft.trim(), page: "1" }); }}><Icon name="search"/><input aria-label="搜索模组" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="搜索名称、派系、关键词……" maxLength={300}/><button className="button button-gold" type="submit">搜索<Icon name="arrow"/></button></form>
     <div className="explore-layout">
       <aside className="filter-panel"><div className="filter-banner"><Icon name="scroll"/><span className="eyebrow">ARCHIVE INDEX</span><h2>模组分类</h2></div><div className="category-list">{categories.map(([value, label]) => <button key={value} type="button" aria-pressed={category === value} className={category === value ? "selected" : ""} onClick={() => navigate({ category: value, page: "1" })}>{label}<Icon name="chevron"/></button>)}</div><div className="filter-note"><Icon name="shield"/><strong>出征前，请先核对</strong><p>中文介绍不等于游戏内汉化。最近更新也不代表已确认版本兼容。</p></div></aside>

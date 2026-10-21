@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { categoryName, count, formatDate } from "@/lib/api";
 import { useRemote } from "@/lib/use-remote";
 import type { Digest, ModPage, Stats } from "@/lib/types";
 import { Icon, Mark } from "./icons";
 import { ModCard } from "./mod-card";
+import { CampaignHero, FactionGateways } from "./game-media";
 import { SyncStatus } from "./sync-status";
 import { EmptyState, ErrorNotice, LoadingCards, SectionHeading } from "./ui";
 
@@ -20,19 +20,7 @@ export function Home() {
 
   return <>
     <div className="page-kicker"><span>THE CAMPAIGN ARCHIVES</span><span className="kicker-rule"/><span>卷首 · 每日精选</span></div>
-    <section className="hero" aria-labelledby="hero-title">
-      <Image className="hero-painting" src="/media/old-world-citadel-v2.webp" alt="" fill priority sizes="(max-width: 1440px) 100vw, 1344px"/>
-      <div className="hero-shade"/>
-      <div className="hero-content">
-        <div className="hero-label"><span/>来自旧世界的模组战报</div>
-        <h1 id="hero-title">旧世界，<br/>值得一场<span>新战役。</span></h1>
-        <p>帝国的战旗尚未落下，远方又传来新的号角。<br/>发现值得一玩的模组，为下一场远征增添可能。</p>
-        <div className="hero-actions"><Link href="/recommend" className="button button-gold"><Icon name="swords"/>描述我想玩的体验<Icon name="arrow"/></Link><Link href="/explore" className="button button-outline">探索模组<Icon name="compass"/></Link></div>
-        <div className="hero-footnote"><Icon name="book"/>中文解读 · 作者来源 · 你的战役清单</div>
-      </div>
-      <div className="hero-caption" aria-hidden="true"><span>THE OLD WORLD</span><small>EVERY CAMPAIGN TELLS A STORY</small></div>
-      <div className="hero-corner corner-tl"/><div className="hero-corner corner-br"/>
-    </section>
+    <CampaignHero/>
 
     <section className="stat-strip" aria-label="目录状态">
       <div><Icon name="layers"/><span><strong>{stats.data ? count(stats.data.total_mods) : "—"}</strong><small>已收录模组</small></span></div>
@@ -42,6 +30,7 @@ export function Home() {
     </section>
     {stats.error && <ErrorNotice message={stats.error} onRetry={stats.reload}/>}
     <SyncStatus/>
+    <FactionGateways/>
 
     <section className="content-section daily-section">
       <SectionHeading eyebrow="I. THE DAILY DISPATCH" title="每日精选 · 远征战报" note={digest.data?.generated_at ? `最近一期 ${digest.data.date} · ${formatDate(digest.data.generated_at, true)} 编入档案` : "新发布、近期更新，以及值得关注的热门模组。"} href="/explore" action="翻阅全部档案"/>

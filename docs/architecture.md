@@ -1,12 +1,22 @@
 # Architecture and delivery boundaries
 
-## v0.2
+## v0.3
 
 One FastAPI codebase owns catalog, source snapshots, structured facts, recommendation runs, refresh jobs and digest editions. Next.js renders the Chinese UI and proxies only an explicit public API allowlist. A CLI performs controlled ingestion and enrichment; a separate worker executes durable catalog refreshes. SQLite supports a minimal local setup; PostgreSQL is the deployment target in Compose.
 
-The first recommendation increment is a bounded synchronous LangGraph workflow with persisted input, constraints and output. `engine=rules` means deterministic query interpretation and lexical ranking; it does **not** mean an LLM, embedding model, reranker or external agent has executed. If configured, the provider can help interpret requirements and generate evidence-bound Chinese summaries. Missing credentials do not lead to fabricated model results.
+The recommendation path is a bounded synchronous LangGraph workflow with persisted input, constraints and output. `engine=rules` means deterministic query interpretation; `engine=llm` means successful model interpretation. The separate `retrieval.method` records the actual BM25 or hybrid RRF path. An LLM and an embedding model are independently configured capabilities; neither configuration alone establishes execution. Missing credentials do not lead to fabricated model results.
 
 Raw metadata snapshots and generated Chinese descriptions are different records. A SHA-256 hash identifies normalized content; fetching unchanged content must not duplicate a revision. Metric snapshots remain separate from content updates. API responses preserve `unknown` values for unsupported claims.
+
+## Retrieval and source freshness
+
+The default retrieval channel is field-weighted BM25 over source titles (weight 3), tags (2), and bounded author introductions (1), with English normalization, Chinese bigrams and domain aliases. Hard constraints filter the bounded source catalog before either retrieval channel. Catalog search opts into Chinese summary text to preserve its search contract; recommendations and embedding input stay source-only. Database and ranking work in the async recommendation path runs outside the event loop through worker threads.
+
+Optional hybrid retrieval computes exact cosine similarity over valid cached vectors and fuses lexical/semantic ranks with equal-weight reciprocal-rank fusion (`k=60`). This is a bounded JSON-vector implementation compatible with SQLite and PostgreSQL; it is not an ANN index, pgvector deployment or learned reranker. Each channel retains a configurable maximum number of candidates. The default catalog scan is 5,000 source records ordered by ID and warns when truncated. The catalog listing/search endpoint still scans its full stored catalog; larger-scale SQL/search-engine indexing remains future work.
+
+`mod_embeddings` uses `(mod_id, namespace)` as its key. The namespace identifies endpoint, model, requested dimensions and document schema; an individual fingerprint identifies source hash and exact indexed text. Manual backfill skips fresh records, performs network calls outside database transactions, and rechecks/locks the source before committing a derived vector. PostgreSQL locks the source row; SQLite manual backfills must run serially. An unconfigured provider, missing index, stale source, invalid dimensions or provider failure triggers an explicit BM25 fallback when no usable semantic path remains. Partially indexed catalogs can combine current vectors with lexical-only candidates and report that limitation.
+
+Recommendations re-read source records after network waits and verify fingerprints and hard constraints again before producing the persisted result. This prevents serving an old vector as current evidence after a concurrent source update. Provider calls are bounded in time, input batch, dimensions and response bytes; invalid vectors never enter the index. Source text remains untrusted data, not instructions. See [retrieval operations](retrieval.md) and [frozen evaluation](retrieval-evaluation.md) for exact scope and known failures.
 
 ## Daily refresh execution
 
@@ -20,7 +30,7 @@ The lease serializes these refresh workers, not every possible manual CLI or ext
 
 ## Planned next increments
 
-1. Expand the evaluated multilingual retrieval dataset and add embeddings/pgvector with baseline comparisons.
+1. Expand independently judged multilingual retrieval data, measure a real embedding provider against the frozen baseline, and select scalable indexing/reranking only after quality and cost measurements.
 2. Move long-running runs to durable workers, add numbered SSE events, cancel/retry and transactionally persisted Outbox events.
 3. Add authenticated, server-side personal lists and preferences. Browser-local favorites in the initial UI are not cross-device account storage.
 4. Add evidence-backed relation extraction and editor review; avoid equating dependency closure with a proven load order.

@@ -153,10 +153,10 @@ def list_mods(session, *, q="", category=None, sort="updated", page=1, page_size
     if sort == "popular":
         statement = statement.where(Mod.subscribers.is_not(None))
     if q.strip():
-        terms = search_terms(q)
+        from modsage.retrieval import rank_bm25
+
         rows = session.scalars(statement).all()
-        scored = [(mod, lexical_score(mod, terms)) for mod in rows]
-        scored = [(mod, score) for mod, score in scored if score > 0]
+        scored = [(item.mod, item.score) for item in rank_bm25(rows, q, include_summary=True)]
         if sort == "popular":
             scored.sort(key=lambda x: (x[0].subscribers or 0, x[1]), reverse=True)
         elif sort == "newest":

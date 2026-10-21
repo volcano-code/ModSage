@@ -33,13 +33,41 @@ test("bounded recommendation excludes overhaul and its run is persisted", async 
   const run = await response.json();
   expect(run.engine).toBe("rules");
   expect(run.status).toBe("completed");
+  expect(run.retrieval).toMatchObject({ method: "bm25", requested_method: "bm25" });
   expect(run.items.map((item: { mod: { id: string } }) => item.mod.id)).toEqual([empireId]);
+  expect(run.items[0].retrieval.channels).toEqual(["lexical"]);
+  expect(run.items[0].retrieval.matched_terms.length).toBeGreaterThan(0);
   const result = page.getByRole("region", { name: "推荐结果" });
   await expect(result.getByRole("link", { name: empireTitle, exact: true })).toBeVisible();
   await expect(result.getByRole("link", { name: overhaulTitle, exact: true })).toHaveCount(0);
   const savedRun = await request.get(`/api/v1/runs/${run.run_id}`);
   expect(savedRun.ok()).toBeTruthy();
   expect((await savedRun.json()).run_id).toBe(run.run_id);
+});
+
+test("official game scenes load, switch with source credits, and lead to faction results", async ({ page }) => {
+  await page.goto("/");
+  const scene = page.locator("img.hero-painting");
+  await expect(scene).toHaveAttribute("alt", /官方主视觉/);
+  await expect.poll(() => scene.evaluate((image: HTMLImageElement) =>
+    image.complete && image.naturalWidth > 0
+  )).toBeTruthy();
+  const source = page.getByRole("link", { name: "官方游戏画面 · 查看来源" });
+  await expect(source).toHaveAttribute("href", /store\.steampowered\.com\/app\/1142710\//);
+  const switcher = page.getByRole("group", { name: "选择战役画面" });
+  const empire = switcher.getByRole("button", { name: /帝国 · 魔法与火药/ });
+  await empire.focus();
+  await page.keyboard.press("Enter");
+  await expect(empire).toHaveAttribute("aria-pressed", "true");
+  await expect(scene).toHaveAttribute("alt", /艾斯佩斯/);
+  await expect.poll(() => scene.evaluate((image: HTMLImageElement) =>
+    image.complete && image.naturalWidth > 0 && image.currentSrc.includes("empire-elspeth")
+  )).toBeTruthy();
+  await expect(source).toHaveAttribute("href", /store\.steampowered\.com\/app\/2325832\//);
+  await page.getByRole("link", { name: "探索帝国模组", exact: true }).click();
+  await expect(page).toHaveURL(/\/explore\?/);
+  await expect(page.getByRole("textbox", { name: "搜索模组" })).toHaveValue("帝国");
+  await expect(page.getByRole("link", { name: empireTitle, exact: true })).toBeVisible();
 });
 
 test("saved collection survives reload and reports a missing known dependency", async ({ page }) => {

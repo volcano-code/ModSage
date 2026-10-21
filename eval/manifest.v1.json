@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "dataset_id": "workshop-excerpts-20261020-v1",
+  "frozen_on": "2026-10-21",
+  "corpus_sha256": "99d68d0371e8b7125a3896239ff213a8ea1ad5a0380bf8f7355d3ce25ecd07ef",
+  "queries_sha256": "5234aab8b190101a7a264d75b87bf3c34ec3e9c86694dcd4ba01f5f591446774",
+  "documents": 42,
+  "queries": 28
+}

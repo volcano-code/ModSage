@@ -48,6 +48,8 @@ jobs:
           ruff format --check apps/api scripts
       - name: Unit and integration tests
         run: pytest apps/api/tests --junitxml=artifacts/backend-junit.xml --cov=modsage --cov-report=term-missing --cov-report=xml:artifacts/coverage.xml
+      - name: Frozen retrieval evaluation
+        run: python scripts/evaluate_retrieval.py --check --output artifacts/retrieval-evaluation.json
       - name: PostgreSQL smoke
         env:
           MODSAGE_DATABASE_URL: postgresql+psycopg://modsage:ci-local-password@127.0.0.1:5432/modsage_ci
@@ -61,6 +63,7 @@ jobs:
           path: |
             artifacts/backend-junit.xml
             artifacts/coverage.xml
+            artifacts/retrieval-evaluation.json
 
   frontend:
     name: Frontend quality and production build
