@@ -1,11 +1,11 @@
-# ModSage v0.4 implementation contract
+# ModSage v0.5 implementation contract
 
 Backend: `apps/api/modsage`, FastAPI + SQLAlchemy; Next.js client: `apps/web`.
 All timestamps are UTC ISO-8601. Workshop IDs are strings. Source text is untrusted.
 No synthetic records in the default application. Empty/error states must remain honest.
 
 ## Public API
-- GET `/api/v1/health` -> `{status, version, database, llm_configured, steam_discovery_configured, embedding_configured, retrieval_mode:'bm25'|'hybrid'}`. Configuration flags do not establish provider connectivity or actual execution.
+- GET `/api/v1/health` -> `{status, version, database, llm_configured, steam_discovery_configured, embedding_configured, retrieval_mode:'bm25'|'hybrid', providers:{llm:ProviderStatus,embedding:ProviderStatus}}`. Configuration flags do not establish provider connectivity or actual execution.
 - GET `/api/v1/stats` -> `{total_mods, chinese_summaries, last_synced_at, data_source, discovery_available}`. `last_synced_at` is the oldest successful fetch among stored mods, a conservative coverage boundary, not the last single-item refresh.
 - GET `/api/v1/mods?q=&category=&sort=updated&page=1&page_size=12` -> `{items: Mod[], total, page, page_size}`. Sort: updated, newest, popular (only when metric available), relevant. Search includes original title, Chinese summary, tags. No fabricated popularity.
 - GET `/api/v1/mods/{id}` -> Mod (with evidence[] and relations[]).
@@ -65,3 +65,15 @@ SteamItem fields: `id,title,description,author,source_url,preview_url,tags,publi
 Use MODSAGE_ prefix: DATABASE_URL (SQLite quickstart, PostgreSQL Docker), STEAM_API_KEY (optional), LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, ADMIN_TOKEN, CORS_ORIGINS. Frontend `API_BASE_URL` is server-side backend URL; use Next.js same-origin `/api/...` proxy to avoid exposing credentials or browser localhost mismatch. No automatic demo seeding.
 
 Retrieval adds RETRIEVAL_MODE, RETRIEVAL_CATALOG_LIMIT, RETRIEVAL_CANDIDATE_LIMIT, EMBEDDING_API_KEY, EMBEDDING_BASE_URL, EMBEDDING_MODEL, EMBEDDING_DIMENSIONS, EMBEDDING_TIMEOUT_SECONDS and EMBEDDING_MIN_SIMILARITY. Blank optional dimensions mean unspecified. Defaults, budgets and fallback semantics are documented in [retrieval.md](retrieval.md). `RETRIEVAL_CATALOG_LIMIT` bounds recommendation/index scans, not the existing full-scan catalog search endpoint.
+
+## Provider readiness and shared quotas (v0.5)
+
+`ProviderStatus = {configuration:'not_configured'|'incomplete'|'invalid'|'configured', calls_enabled:boolean, last_call:null|{status:'started'|'succeeded'|'failed'|'cancelled',at:string,completed_at:string|null,error_code:string|null}}`. Health is `Cache-Control: no-store`; it does not call any external service. `calls_enabled` requires the startup switch and both nonzero limits, but does not promise remaining quota or live availability. A successful last call is protocol-level validation, not successful business constraints, source faithfulness, or current-request success. A changed credential/configuration has a different private identity and does not inherit old observations.
+
+Private diagnostic commands: `preflight`, `usage [--limit 1..100]`, `provider-check --scope llm|embedding|steam|all [--live] [--mod-id UINT64] [--query TEXT]`. No public management routes are added. Configuration/endpoint values and private call details must never be added to the public health response.
+
+Preflight makes zero network calls and returns `status: ready|failed`, `live_verified:false`. Fully unconfigured optional providers are acceptable; partial/invalid configuration is a failure. Canary returns `succeeded|failed|blocked`, with only succeeded exiting zero. `--live` is mandatory; no key, no source sample, insufficient quota, no actual model work, and fallback are not successful checks. LLM and embedding scopes each admit at most two paid calls. The Steam scope limits itself to one QueryFiles page and one detail operation (at most six HTTP attempts including adapter retries). Canary uses a temporary source catalogue and writes only the shared provider ledger in the application DB.
+
+`provider_calls` reserves attempts before networking, stores bounded safe metadata, and never refunds failed/interrupted calls. `provider_admission` serializes UTC daily and rolling-minute total call limits across processes using the same DB and consistent startup configuration. No DB transaction spans HTTP. The switch and limits must be reapplied to API and all worker processes together. This is a call-count budget, not token-price or currency accounting. Detailed settings, usage null semantics, error codes and operations are in [provider-readiness.md](provider-readiness.md) and [operations.md](operations.md).
+
+Additional settings: `LLM_MAX_OUTPUT_TOKENS`, `LLM_TOKEN_PARAMETER`, `LLM_TEMPERATURE` (blank omits the field), `PROVIDER_CALLS_ENABLED`, `PROVIDER_DAILY_CALL_LIMIT`, `PROVIDER_MINUTE_CALL_LIMIT`, and `EMBEDDING_RESPONSE_MODEL`. LLM Base URL now participates in the configured flag and strict endpoint validation. Existing engine/retrieval result contracts and durable task routes remain unchanged.

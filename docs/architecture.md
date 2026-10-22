@@ -59,3 +59,13 @@ API-based discovery and a bounded public-page fallback must be identified separa
 ## Deployment model
 
 The Compose defaults bind the database, API and frontend to loopback for local evaluation. Public hosting requires a suitable HTTPS reverse proxy, production secrets and a database backup policy. CI and a local browser check validate specific configurations; neither substitutes for multi-day production observation.
+
+## Provider admission and readiness (v0.5)
+
+Every product model call uses a shared `ProviderUsageStore`. `provider_admission` takes a short SQLite write lock or PostgreSQL row lock, counts all reserved attempts in the UTC day and rolling-minute windows, and inserts a `provider_calls` record atomically. After commit, the bounded HTTP request runs with no open database transaction. Completion records only safe operation/status/latency/usage metadata. Failed, cancelled and abandoned reservations remain consumed; normal worker lease recovery does not reset this independent budget.
+
+Configuration checking is offline and separate from observation. Public health contains a current-configuration last call status, never a secret, endpoint, model label, request ID or quota amount. A private hash identity changes with credential rotation; the document embedding namespace remains independent of the credential but includes an explicitly configured canonical response model. Transport success, recommendation success, semantic quality and human source review remain distinct facts.
+
+The canary command requires explicit `--live`, checks every requested precondition before any network request, copies up to three real catalogue records to an isolated in-memory database, and exercises the existing graph/summary/embedding paths. The clients use the original database ledger, so canary calls consume the same quotas. It never processes an existing queue or replaces production summaries/vectors. The CI counterpart is a labelled loopback HTTP fixture with real CLI subprocesses, not live provider acceptance.
+
+Quota values and the disable switch are process configuration, not a database policy management service. All API, CLI and worker processes must use the same values and be recreated together when changing them. See [provider operations](provider-readiness.md) for the precise protocol and [deployment operations](operations.md) for restart/backup and residual limits.

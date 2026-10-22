@@ -24,10 +24,12 @@ from modsage.main import app
 from modsage.models import (
     Mod,
     ModEmbedding,
+    ProviderCall,
     RecommendationEvent,
     RecommendationJob,
     RecommendationRun,
 )
+from modsage.provider_usage import ProviderLimitExceeded, ProviderUsageStore, usage_report
 from modsage.recommendation_jobs import (
     RecommendationJobNotFound,
     RecommendationLeaseLost,
@@ -97,6 +99,81 @@ def verify_refresh_concurrency(database_url: str) -> None:
     engine.dispose()
     print(
         "PostgreSQL queue smoke passed: duplicate enqueue, concurrent claim, lease recovery, fencing"
+    )
+
+
+def verify_provider_admission(database_url: str) -> None:
+    """Exercise shared paid-attempt admission without making any provider request."""
+    engine, factory = make_database(database_url)
+    init_database(engine)
+    settings = Settings(
+        _env_file=None,
+        database_url=database_url,
+        llm_api_key="ci-provider-fixture-key",
+        llm_model="ci-provider-fixture",
+        provider_calls_enabled=True,
+        provider_daily_call_limit=1,
+        provider_minute_call_limit=30,
+    )
+    now = datetime.now(timezone.utc)
+    barrier = Barrier(4)
+    call_ids = []
+
+    def reserve(index):
+        own_engine, own_factory = make_database(database_url)
+        try:
+            barrier.wait(timeout=10)
+            try:
+                return ProviderUsageStore(own_factory, settings).reserve(
+                    "llm" if index % 2 else "embedding", "understand", now=now
+                )
+            except ProviderLimitExceeded as exc:
+                assert exc.code == "daily_call_limit"
+                return None
+        finally:
+            own_engine.dispose()
+
+    try:
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            call_ids.extend(call_id for call_id in pool.map(reserve, range(4)) if call_id)
+        assert len(call_ids) == 1, (
+            "Concurrent provider reservations exceeded the global daily limit"
+        )
+        store = ProviderUsageStore(factory, settings)
+        store.finish(call_ids[0], status="failed", latency_ms=25, error_code="timeout", now=now)
+        for provider in ("llm", "embedding"):
+            try:
+                store.reserve(provider, "understand", now=now + timedelta(seconds=1))
+            except ProviderLimitExceeded as exc:
+                assert exc.code == "daily_call_limit"
+            else:
+                raise AssertionError("A failed request incorrectly refunded the global budget")
+        minute_settings = settings.model_copy(
+            update={"provider_daily_call_limit": 200, "provider_minute_call_limit": 1}
+        )
+        try:
+            ProviderUsageStore(factory, minute_settings).reserve(
+                "embedding", "query_embedding", now=now + timedelta(seconds=1)
+            )
+        except ProviderLimitExceeded as exc:
+            assert exc.code == "minute_call_limit"
+        else:
+            raise AssertionError("Provider kinds did not share the minute allowance")
+        next_day = (now + timedelta(days=1)).replace(hour=0, minute=1, second=0, microsecond=0)
+        call_ids.append(store.reserve("embedding", "query_embedding", now=next_day))
+        report = usage_report(factory, settings, now=next_day)
+        assert report["today"]["reserved_calls"] == 1
+        assert report["today"]["started"] == 1
+        assert report["today"]["calls_without_total_tokens"] == 1
+        assert report["remaining"]["daily"] == 0
+        assert len(report["items"]) == 2
+    finally:
+        with factory.begin() as session:
+            session.execute(delete(ProviderCall).where(ProviderCall.id.in_(call_ids)))
+        engine.dispose()
+    print(
+        "PostgreSQL provider smoke passed: concurrent global admission, failed attempts consume "
+        "budget, shared minute allowance, UTC rollover, unknown receipt stays reserved; no provider calls"
     )
 
 
@@ -337,6 +414,7 @@ def main() -> None:
     if not database_url.startswith("postgresql"):
         raise SystemExit("Set MODSAGE_DATABASE_URL to the isolated PostgreSQL test database")
     verify_refresh_concurrency(database_url)
+    verify_provider_admission(database_url)
     asyncio.run(verify_recommendation_jobs(database_url))
     asyncio.run(verify_embedding_roundtrip(database_url))
     with TestClient(app) as client:

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRemote } from "@/lib/use-remote";
 import { useRecommendationJob } from "@/lib/use-recommendation-job";
 import type { Health, Recommendation } from "@/lib/types";
@@ -10,6 +10,7 @@ import { ModCard } from "./mod-card";
 import { CampaignBanner } from "./game-media";
 import { EmptyState, ErrorNotice } from "./ui";
 import { RecommendationHistory, RecommendationJobPanel } from "./recommendation-job-panel";
+import { ProviderStatus, recommendationMode } from "./provider-status";
 
 const examples = ["想玩震旦，增加新兵种，不要大型重做", "找一些改善界面体验的 Mod，最好有中文", "想让帝国战役更有变化，尽量保持原版体验"];
 
@@ -59,6 +60,13 @@ export function Recommend() {
   const result = task.job?.result ?? null;
   const busy = Boolean(task.operation) || task.job?.status === "queued" || task.job?.status === "running";
   const unconfirmed = Boolean(task.selected && !task.selected.id);
+  const taskId = task.job?.id;
+  const taskStatus = task.job?.status;
+  const refreshHealth = health.reload;
+
+  useEffect(() => {
+    if (taskStatus === "completed" || taskStatus === "failed" || taskStatus === "cancelled") refreshHealth();
+  }, [taskId, taskStatus, refreshHealth]);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -78,10 +86,10 @@ export function Recommend() {
   return <>
     <CampaignBanner scene="khorne" eyebrow="THE WAR COUNCIL · 战役参谋" title="下一场远征，从你的构想开始。" description="告诉参谋你想玩的派系、期待的改变，以及需要避开的内容。"/>
     <div className="recommend-layout"><aside className="recommend-guide"><div className="guide-symbol"><Mark/></div><span className="eyebrow">A LETTER TO YOUR SAGE</span><h2>落笔之前</h2><p>告诉我们你想玩什么，以及不想要什么。</p><ol><li><span>01</span><div><strong>想玩谁？</strong><p>例如帝国、震旦，或你偏爱的派系。</p></div></li><li><span>02</span><div><strong>想改变什么？</strong><p>兵种、战役、界面，或整体体验。</p></div></li><li><span>03</span><div><strong>有什么取舍？</strong><p>不要大修、必须有汉化，或尽量轻量。</p></div></li></ol><div className="guide-bottom"><Icon name="shield"/><p>没有证据的信息会保持未知。推荐不代表已完成游戏内兼容测试。</p></div></aside>
-      <section className="recommend-main"><form className="prompt-panel" onSubmit={submit}><div className="order-heading"><span>CAMPAIGN ORDERS</span><Icon name="swords"/><span>致我的战役参谋</span></div><div className="prompt-topline"><label htmlFor="request-description">你的战役构想</label><span className="mode-badge">{health.data ? health.data.llm_configured ? "模型辅助理解可用" : "目录检索已就绪" : health.error ? "服务暂不可用" : "正在检查服务"}</span></div><textarea id="request-description" value={inputQuery} onChange={(event) => editQuery(event.target.value)} maxLength={1000} minLength={2} required placeholder="例如：我主要玩帝国，想增加火炮和兵种内容，不要大型重做，最好有中文。" disabled={busy || unconfirmed || !task.ready}/><div className="prompt-footer"><span>{inputQuery.length} / 1000<span className="prompt-hint"> · 尽量写清偏好和排除项</span></span><div><button type="submit" className="button button-gold" disabled={busy || unconfirmed || !task.ready || inputQuery.trim().length < 2}><Icon name={busy ? "refresh" : "spark"} className={busy ? "spinning" : ""}/>{busy ? task.operation === "submit" ? "正在提交任务" : "推荐任务处理中" : "寻找适合的模组"}{!busy && <Icon name="arrow"/>}</button></div></div></form>
+      <section className="recommend-main"><form className="prompt-panel" onSubmit={submit}><div className="order-heading"><span>CAMPAIGN ORDERS</span><Icon name="swords"/><span>致我的战役参谋</span></div><div className="prompt-topline"><label htmlFor="request-description">你的战役构想</label><span className="mode-badge">{health.data ? recommendationMode(health.data) : health.error ? "服务暂不可用" : "正在检查服务"}</span></div><textarea id="request-description" value={inputQuery} onChange={(event) => editQuery(event.target.value)} maxLength={1000} minLength={2} required placeholder="例如：我主要玩帝国，想增加火炮和兵种内容，不要大型重做，最好有中文。" disabled={busy || unconfirmed || !task.ready}/><div className="prompt-footer"><span>{inputQuery.length} / 1000<span className="prompt-hint"> · 尽量写清偏好和排除项</span></span><div><button type="submit" className="button button-gold" disabled={busy || unconfirmed || !task.ready || inputQuery.trim().length < 2}><Icon name={busy ? "refresh" : "spark"} className={busy ? "spinning" : ""}/>{busy ? task.operation === "submit" ? "正在提交任务" : "推荐任务处理中" : "寻找适合的模组"}{!busy && <Icon name="arrow"/>}</button></div></div></form>
       {task.selected && <RecommendationJobPanel record={task.selected} job={task.job} connection={task.connection} operation={task.operation} hasError={Boolean(task.error)} onCancel={task.cancel} onRetry={task.retry} onReconnect={task.reconnect} onNew={newDraft}/>}
       <div className="example-prompts"><span>试试这样问</span>{examples.map((example) => <button key={example} disabled={busy || unconfirmed} onClick={() => editQuery(example)}>{example}<Icon name="arrow"/></button>)}</div>
-      {health.data && !health.data.llm_configured && <p className="source-note"><Icon name="book"/>当前使用规则理解你的条件；检索方式与命中依据会随结果展示。</p>}
+      {health.data && <ProviderStatus health={health.data} onRefresh={health.reload}/> }
       {health.error && <ErrorNotice message={health.error} onRetry={health.reload}/>}
       {task.error && <ErrorNotice message={task.error}/>}
       {task.storageWarning && <div className="notice" role="status"><Icon name="alert"/><p>{task.storageWarning}</p></div>}

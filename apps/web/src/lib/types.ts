@@ -52,6 +52,17 @@ export interface Stats {
   discovery_available: boolean;
 }
 
+export interface ProviderStatus {
+  configuration: "not_configured" | "incomplete" | "invalid" | "configured";
+  calls_enabled: boolean;
+  last_call: {
+    status: "started" | "succeeded" | "failed" | "cancelled";
+    at: string;
+    completed_at: string | null;
+    error_code: string | null;
+  } | null;
+}
+
 export interface Health {
   status: string;
   version: string;
@@ -60,6 +71,7 @@ export interface Health {
   steam_discovery_configured: boolean;
   embedding_configured?: boolean;
   retrieval_mode?: "bm25" | "hybrid";
+  providers?: { llm: ProviderStatus; embedding: ProviderStatus };
 }
 
 export interface SyncStatus {

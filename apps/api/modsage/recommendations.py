@@ -20,6 +20,7 @@ from modsage.embeddings import (
 )
 from modsage.llm import ModelClient, ModelInvalidOutput, ModelUnavailable
 from modsage.models import Mod, RecommendationRun, utcnow
+from modsage.provider_usage import ProviderUsageStore
 from modsage.retrieval import (
     core_description,
     fuse_rankings,
@@ -210,7 +211,8 @@ class State(TypedDict, total=False):
 
 
 def build_graph(session_factory, settings, model=None, embedding_client=None, on_stage=None):
-    model = model or ModelClient(settings)
+    usage_store = ProviderUsageStore(session_factory, settings)
+    model = model or ModelClient(settings, usage_store=usage_store, operation="understand")
 
     async def understand(state: State):
         if on_stage is not None:
@@ -307,7 +309,9 @@ def build_graph(session_factory, settings, model=None, embedding_client=None, on
                     warnings.append("没有可用的当前版本向量，本次退回 BM25；请先执行向量回填。")
                 else:
                     try:
-                        provider = embedding_client or EmbeddingClient(settings)
+                        provider = embedding_client or EmbeddingClient(
+                            settings, usage_store=usage_store, operation="query_embedding"
+                        )
                         async with asyncio.timeout(settings.embedding_timeout_seconds):
                             response = await provider.embed([state["query"]])
                         vector = (

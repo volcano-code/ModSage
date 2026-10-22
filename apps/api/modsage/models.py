@@ -6,6 +6,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -145,6 +146,44 @@ class RecommendationAdmission(Base):
     __tablename__ = "recommendation_admission"
     name: Mapped[str] = mapped_column(String(24), primary_key=True)
     touched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ProviderAdmission(Base):
+    """A short database write lock protects the shared external-call allowance."""
+
+    __tablename__ = "provider_admission"
+    name: Mapped[str] = mapped_column(String(24), primary_key=True)
+    touched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ProviderCall(Base):
+    """Only bounded operational metadata; never prompts, keys, URLs, or response bodies."""
+
+    __tablename__ = "provider_calls"
+    __table_args__ = (
+        Index(
+            "ix_provider_calls_configuration_reserved",
+            "provider",
+            "configuration_id",
+            "reserved_at",
+        ),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    provider: Mapped[str] = mapped_column(String(16))
+    operation: Mapped[str] = mapped_column(String(32))
+    configuration_id: Mapped[str] = mapped_column(String(64), index=True)
+    status: Mapped[str] = mapped_column(String(16), default="started")
+    reserved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    http_status: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    error_code: Mapped[str | None] = mapped_column(String(48), nullable=True)
+    returned_model: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    request_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    finish_reason: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    total_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class Digest(Base):

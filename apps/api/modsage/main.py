@@ -18,6 +18,7 @@ from modsage.database import init_database, make_database
 from modsage.digests import build_digest, validate_modlist
 from modsage.jobs import sync_status
 from modsage.models import Mod, RecommendationRun
+from modsage.provider_usage import public_provider_status
 from modsage.recommendation_api import register_recommendation_api
 from modsage.recommendation_jobs import run_recommendation_worker
 from modsage.recommendations import recommend
@@ -96,7 +97,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         if request.url.path.startswith(
-            ("/api/v1/runs", "/api/v1/sync/status", "/api/v1/recommendation-jobs")
+            ("/api/v1/health", "/api/v1/runs", "/api/v1/sync/status", "/api/v1/recommendation-jobs")
         ):
             response.headers["Cache-Control"] = "no-store"
         return response
@@ -113,6 +114,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "embedding_configured": settings.embedding_configured,
             "retrieval_mode": settings.retrieval_mode,
             "steam_discovery_configured": bool(settings.steam_api_key),
+            "providers": public_provider_status(session_factory, settings),
         }
 
     @app.get("/api/v1/stats")

@@ -5,6 +5,7 @@ from sqlalchemy import select
 
 from modsage.llm import ModelClient, ModelInvalidOutput, ModelUnavailable
 from modsage.models import Mod
+from modsage.provider_usage import ProviderUsageStore
 
 
 class Summary(BaseModel):
@@ -59,7 +60,11 @@ def apply_summary(session, settings, mod_id, expected_hash, summary: Summary) ->
 async def enrich_mods(session_factory, settings, limit=10, model=None) -> dict:
     if not settings.llm_configured:
         raise ModelUnavailable("请配置 MODSAGE_LLM_API_KEY 和 MODSAGE_LLM_MODEL 后生成中文介绍。")
-    model = model or ModelClient(settings)
+    model = model or ModelClient(
+        settings,
+        usage_store=ProviderUsageStore(session_factory, settings),
+        operation="summary",
+    )
     with session_factory() as session:
         pending = session.scalars(
             select(Mod).where(Mod.summary_status == "pending").limit(limit)

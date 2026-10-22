@@ -27,6 +27,7 @@ from modsage.enrichment import apply_summary, generate_summary
 from modsage.ingestion import import_items
 from modsage.llm import ModelClient, ModelInvalidOutput, ModelUnavailable
 from modsage.models import IngestionRun, Mod, RefreshJob, RefreshLease, RefreshWorker, utcnow
+from modsage.provider_usage import ProviderUsageStore
 from modsage.sources.steam import SteamClient, SteamConfigurationError, SteamSourceError
 
 TIMEZONE = ZoneInfo("Asia/Shanghai")
@@ -540,7 +541,11 @@ async def _enrich_stage(session_factory, settings, claim, model):
     with session_factory.begin() as session:
         job = fence(session, claim)
         selected = list(job.result["enrichment"]["selected_ids"])
-    model = model or ModelClient(settings)
+    model = model or ModelClient(
+        settings,
+        usage_store=ProviderUsageStore(session_factory, settings),
+        operation="refresh_summary",
+    )
     for mod_id in selected:
         with session_factory.begin() as session:
             job = fence(session, claim)

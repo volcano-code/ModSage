@@ -25,6 +25,25 @@ def parse_ids(values):
 
 
 async def execute(args, settings, session_factory):
+    if args.command == "preflight":
+        from modsage.provider_checks import preflight
+
+        return preflight(session_factory, settings)
+    if args.command == "provider-check":
+        from modsage.provider_checks import provider_check
+
+        return await provider_check(
+            session_factory,
+            settings,
+            scope=args.scope,
+            live=args.live,
+            mod_id=args.mod_id,
+            query=args.query,
+        )
+    if args.command == "usage":
+        from modsage.provider_usage import usage_report
+
+        return usage_report(session_factory, settings, limit=args.limit)
     if args.command == "recommendation-worker":
         return await run_recommendation_worker(session_factory, settings, once=args.once)
     if args.command == "embedding-status":
@@ -88,6 +107,27 @@ async def execute(args, settings, session_factory):
 def main():
     parser = argparse.ArgumentParser(description="ModSage source and knowledge operations")
     subs = parser.add_subparsers(dest="command", required=True)
+    subs.add_parser(
+        "preflight", help="Check local configuration, catalog and budgets without network calls"
+    )
+    check = subs.add_parser(
+        "provider-check",
+        help="Explicitly verify a small real-provider sample without changing the catalog",
+    )
+    check.add_argument("--scope", choices=["llm", "embedding", "steam", "all"], default="llm")
+    check.add_argument(
+        "--live", action="store_true", help="Allow the bounded external calls shown in the report"
+    )
+    check.add_argument(
+        "--mod-id", help="Use a specific already imported Workshop entry as the real source sample"
+    )
+    check.add_argument(
+        "--query", help="Optional recommendation query, 2..1000 characters; omitted from the report"
+    )
+    usage = subs.add_parser(
+        "usage", help="Inspect bounded provider attempt and reported-token history offline"
+    )
+    usage.add_argument("--limit", type=int, default=20, choices=range(1, 101), metavar="1..100")
     recommendation_worker = subs.add_parser(
         "recommendation-worker", help="Run durable recommendation jobs with lease recovery"
     )
@@ -143,29 +183,35 @@ def main():
     args = parser.parse_args()
     if args.command == "discover" and args.public and args.limit > 100:
         parser.error("Public discovery is bounded to at most 100 entries per operation.")
-    settings = get_settings()
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
     logging.getLogger("modsage.jobs").setLevel(logging.INFO)
     logging.getLogger("modsage.recommendation_jobs").setLevel(logging.INFO)
-    engine, session_factory = make_database(settings.database_url)
-    init_database(engine)
+    engine = None
     try:
+        settings = get_settings()
+        engine, session_factory = make_database(settings.database_url)
+        init_database(engine)
         result = asyncio.run(execute(args, settings, session_factory))
         print(json.dumps(result, ensure_ascii=False, indent=2))
         if result.get("errors") or result.get("status") in {
             "partial",
             "failed",
+            "blocked",
             "retry_wait",
             "lease_lost",
         }:
             return 1
         return 0
     except Exception as exc:
+        from pydantic import ValidationError
+
         from modsage.embeddings import EmbeddingUnavailable
         from modsage.llm import ModelUnavailable
         from modsage.sources.steam import SteamConfigurationError
 
-        if isinstance(exc, EmbeddingUnavailable):
+        if isinstance(exc, ValidationError):
+            hint = "配置校验失败；请检查环境变量类型、范围和必填项。出于保密，不输出原始配置值。"
+        elif isinstance(exc, EmbeddingUnavailable):
             hint = "请配置 MODSAGE_EMBEDDING_API_KEY、MODSAGE_EMBEDDING_BASE_URL、MODSAGE_EMBEDDING_MODEL；向量回填不会自动借用对话模型配置。"
         elif isinstance(exc, SteamConfigurationError):
             hint = "官方发现需要 MODSAGE_STEAM_API_KEY；也可显式 --public 使用有限公开目录。"
@@ -182,7 +228,8 @@ def main():
         )
         return 1
     finally:
-        engine.dispose()
+        if engine is not None:
+            engine.dispose()
 
 
 if __name__ == "__main__":

@@ -3,12 +3,13 @@
 import asyncio
 import hashlib
 import json
-from urllib.parse import urlsplit
 
-import httpx
 from sqlalchemy import func, select
 
 from modsage.models import Mod, ModEmbedding, utcnow
+from modsage.provider_config import provider_configuration
+from modsage.provider_http import ProviderCall, ProviderRequestError
+from modsage.provider_usage import ProviderUsageStore
 from modsage.retrieval import document_fields, normalized_vector
 
 DOCUMENT_VERSION = "source-intro-v1"
@@ -16,7 +17,9 @@ MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 
 
 class EmbeddingUnavailable(RuntimeError):
-    pass
+    def __init__(self, message="Embedding service is unavailable", *, code="embedding_unavailable"):
+        self.code = code
+        super().__init__(message)
 
 
 def document_text(mod) -> str:
@@ -38,67 +41,65 @@ def embedding_namespace(settings) -> str:
         settings.embedding_model.strip(),
         settings.embedding_dimensions,
     ]
+    # An explicitly accepted canonical model is part of the vector identity.
+    # Keep the pre-existing namespace when no alias override was configured.
+    if settings.embedding_response_model.strip():
+        identity.append({"response_model": settings.embedding_response_model.strip()})
     return hashlib.sha256(json.dumps(identity).encode()).hexdigest()
 
 
 class EmbeddingClient:
-    def __init__(self, settings, client=None):
+    def __init__(self, settings, client=None, *, usage_store=None, operation="query_embedding"):
         self.settings = settings
         self.client = client
+        self.usage_store = usage_store
+        self.operation = operation
+        self.last_call = None
 
     async def embed(self, texts: list[str]) -> list[list[float]]:
-        if not self.settings.embedding_configured:
-            raise EmbeddingUnavailable("Embedding service is not configured")
-        if (
-            not texts
-            or len(texts) > 16
-            or any(not isinstance(t, str) or not t.strip() or len(t) > 6000 for t in texts)
-        ):
-            raise EmbeddingUnavailable("Embedding input exceeds the supported batch budget")
-        base = self.settings.embedding_base_url.strip().rstrip("/")
+        call = ProviderCall(self.settings, "embedding", self.operation, self.usage_store)
+        self.last_call = call.metadata
         try:
-            url = urlsplit(base)
-            _ = url.port
-        except ValueError:
-            raise EmbeddingUnavailable("Invalid embedding endpoint") from None
-        if (
-            url.scheme not in {"http", "https"}
-            or not url.netloc
-            or url.username
-            or url.password
-            or url.query
-            or url.fragment
-        ):
-            raise EmbeddingUnavailable("Invalid embedding endpoint")
-        body = {"model": self.settings.embedding_model, "input": texts, "encoding_format": "float"}
-        if self.settings.embedding_dimensions is not None:
-            body["dimensions"] = self.settings.embedding_dimensions
-        own = self.client is None
-        client = self.client or httpx.AsyncClient(
-            timeout=self.settings.embedding_timeout_seconds, follow_redirects=False
-        )
-        try:
-            async with asyncio.timeout(self.settings.embedding_timeout_seconds):
-                async with client.stream(
-                    "POST",
-                    base + "/embeddings",
-                    json=body,
-                    headers={"Authorization": "Bearer " + self.settings.embedding_api_key},
-                ) as response:
-                    response.raise_for_status()
-                    content = bytearray()
-                    async for chunk in response.aiter_bytes():
-                        content.extend(chunk)
-                        if len(content) > MAX_RESPONSE_BYTES:
-                            raise EmbeddingUnavailable("Embedding response exceeded its budget")
-                payload = json.loads(content)
-                if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+            configuration = provider_configuration(self.settings, "embedding")
+            if not configuration["configured"]:
+                raise ProviderRequestError(
+                    "configuration_invalid" if configuration["issues"] else "not_configured"
+                )
+            if (
+                not isinstance(texts, list)
+                or not texts
+                or len(texts) > 16
+                or any(not isinstance(t, str) or not t.strip() or len(t) > 6000 for t in texts)
+            ):
+                raise ProviderRequestError("invalid_input")
+            try:
+                for value in texts:
+                    value.encode()
+            except UnicodeError:
+                raise ProviderRequestError("invalid_input") from None
+            body = {
+                "model": self.settings.embedding_model.strip(),
+                "input": texts,
+                "encoding_format": "float",
+            }
+            if self.settings.embedding_dimensions is not None:
+                body["dimensions"] = self.settings.embedding_dimensions
+            payload = await call.request(
+                client=self.client,
+                url=self.settings.embedding_base_url.strip().rstrip("/") + "/embeddings",
+                body=body,
+                timeout=self.settings.embedding_timeout_seconds,
+                response_limit=MAX_RESPONSE_BYTES,
+            )
+            try:
+                if not isinstance(payload.get("data"), list):
                     raise ValueError("Invalid embedding response")
-                if (
-                    payload.get("model", self.settings.embedding_model)
-                    != self.settings.embedding_model
-                ):
-                    raise ValueError("Unexpected embedding model")
+                expected_model = (
+                    self.settings.embedding_response_model.strip()
+                    or self.settings.embedding_model.strip()
+                )
+                if payload.get("model", expected_model) != expected_model:
+                    raise ProviderRequestError("unexpected_model")
                 if len(payload["data"]) != len(texts):
                     raise ValueError("Unexpected embedding count")
                 vectors = {}
@@ -117,23 +118,24 @@ class EmbeddingClient:
                         raise ValueError("Invalid embedding vector")
                     dimension = len(vector)
                     vectors[index] = vector
-                return [vectors[index] for index in range(len(texts))]
-        except (
-            httpx.HTTPError,
-            httpx.InvalidURL,
-            TimeoutError,
-            KeyError,
-            TypeError,
-            ValueError,
-            OverflowError,
-        ):
-            # Never forward upstream messages, auth headers, endpoint URLs, or source text.
-            raise EmbeddingUnavailable(
-                "Embedding request failed or returned invalid vectors"
-            ) from None
-        finally:
-            if own:
-                await client.aclose()
+            except (KeyError, TypeError, ValueError, OverflowError):
+                raise ProviderRequestError("invalid_response") from None
+            error = await call.finish("succeeded")
+            if error:
+                raise ProviderRequestError(error)
+            return [vectors[index] for index in range(len(texts))]
+        except asyncio.CancelledError:
+            await call.finish("cancelled", "cancelled")
+            raise
+        except ProviderRequestError as exc:
+            code = await call.finish("failed", exc.code)
+            message = {
+                "configuration_invalid": "Invalid embedding endpoint or configuration",
+                "not_configured": "Embedding service is not configured",
+                "invalid_input": "Embedding input exceeds the supported batch budget",
+                "response_too_large": "Embedding response exceeded its budget",
+            }.get(code, "Embedding request failed or returned invalid vectors")
+            raise EmbeddingUnavailable(message, code=code) from None
 
 
 def current_vectors(session, settings, mods, *, dimensions=None) -> tuple[dict, int]:
@@ -212,7 +214,11 @@ async def backfill_embeddings(session_factory, settings, *, limit=20, batch_size
     }
     if total > len(mods):
         result["warnings"].append("目录超过本次扫描上限；未扫描条目不计入索引覆盖。")
-    provider = client or EmbeddingClient(settings)
+    provider = client or EmbeddingClient(
+        settings,
+        usage_store=ProviderUsageStore(session_factory, settings),
+        operation="document_embedding",
+    )
     namespace = embedding_namespace(settings)
     for start in range(0, len(snapshots), batch_size):
         batch = snapshots[start : start + batch_size]

@@ -50,6 +50,8 @@ jobs:
         run: pytest apps/api/tests --junitxml=artifacts/backend-junit.xml --cov=modsage --cov-report=term-missing --cov-report=xml:artifacts/coverage.xml
       - name: Frozen retrieval evaluation
         run: python scripts/evaluate_retrieval.py --check --output artifacts/retrieval-evaluation.json
+      - name: Provider contract through loopback HTTP and real CLI processes
+        run: python scripts/provider_contract_smoke.py > artifacts/provider-contract.json
       - name: PostgreSQL smoke
         env:
           MODSAGE_DATABASE_URL: postgresql+psycopg://modsage:ci-local-password@127.0.0.1:5432/modsage_ci
@@ -65,6 +67,7 @@ jobs:
             artifacts/backend-junit.xml
             artifacts/coverage.xml
             artifacts/retrieval-evaluation.json
+            artifacts/provider-contract.json
 
   frontend:
     name: Frontend quality and production build
@@ -147,6 +150,11 @@ jobs:
           curl --fail --silent --show-error --output /dev/null http://127.0.0.1:3000/
       - name: Verify durable recommendation worker and SSE proxy
         run: python3 scripts/recommendation_job_smoke.py --base-url http://127.0.0.1:3000
+      - name: Offline provider readiness in API and worker containers
+        run: |
+          docker compose exec -T api python -m modsage.cli preflight
+          docker compose exec -T recommendation-worker python -m modsage.cli preflight
+          docker compose exec -T api python -m modsage.cli usage --limit 1
       - name: Start optional worker without external discovery
         run: |
           docker compose --profile automation run --build --rm --no-deps -e MODSAGE_REFRESH_ENABLED=false worker python -m modsage.cli worker --once

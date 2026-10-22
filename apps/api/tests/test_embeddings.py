@@ -48,8 +48,29 @@ def test_namespace_changes_for_model_endpoint_dimension_but_not_credentials(sett
         {"embedding_model": "v2"},
         {"embedding_base_url": "https://another.example/v1"},
         {"embedding_dimensions": 128},
+        {"embedding_response_model": "canonical-v2"},
     ]:
         assert namespace != embedding_namespace(original.model_copy(update=patch))
+
+
+@pytest.mark.asyncio
+async def test_embedding_response_alias_change_invalidates_cached_vectors(
+    database, settings, item_factory
+):
+    setting = configured(settings, embedding_response_model="canonical-v1")
+    with database.begin() as session:
+        import_items(session, [item_factory()])
+
+    class Provider:
+        async def embed(self, texts):
+            return [[1, 0] for _ in texts]
+
+    await backfill_embeddings(database, setting, client=Provider())
+    assert embedding_status(database, setting)["indexed"] == 1
+    for response_model in ("", "canonical-v2"):
+        changed = setting.model_copy(update={"embedding_response_model": response_model})
+        assert embedding_status(database, changed)["indexed"] == 0
+        assert embedding_status(database, changed)["missing"] == 1
 
 
 @pytest.mark.asyncio

@@ -1,85 +1,74 @@
-# v0.4 交付与验证记录
+# v0.5 验证记录
 
-验证日期：2026-10-21。本轮将需求推荐接入持久化后台任务和可续接 SSE，保留 v0.3 的官方游戏画面、检索与证据呈现。上一轮完整记录保留在 [v0.3 验证记录](verification-v0.3.md)。
+日期：2026-10-22（北京时间）。本轮完成真实 API key 接入前的配置、协议、canary、调用次数额度、使用记录、公开状态与运行文档；没有配置或调用真实模型服务。
 
-## 本轮交付
+前一轮记录保留在 [verification-v0.4.md](verification-v0.4.md)。真实服务接入说明见 [provider-readiness.md](provider-readiness.md)。
 
-- 推荐任务、历史事件与准入锁持久化到数据库；状态变更及对应事件在同一事务提交。
-- 受随机访问凭证保护的提交、状态、取消、重试和 SSE 接口；幂等提交在响应丢失后仍能恢复原任务。
-- 原子领取、租约续期、超时接管、旧 worker 写入隔离与总尝试次数限制。新任务结果不写入旧公开运行记录。
-- 前端展示真实图节点阶段，刷新恢复、本机历史、断线续接、服务端确认后的取消与有界重试。
-- 本地默认内嵌 worker；Compose 默认启动独立推荐 worker。目录刷新 worker 继续使用原有 automation profile。
-- 官方恐虐画面、猩红与古铜配色、羊皮纸表单保留；新增参谋军报、阶段时间线和本机记录区域。
-
-任务恢复会重新执行有界推荐图，未实现 LangGraph 节点检查点，也不承诺外部模型调用恰好一次。完整协议与运行边界见 [推荐任务运行说明](recommendation-tasks.md)。
-
-## 本地自动化结果
-
-使用 Python 3.12.14、Node.js 24.19 和仓库锁定依赖；版本统一为 0.4.0，没有增加第三方运行时依赖。
+## 本地最终验证
 
 | 检查 | 实际结果 |
 | --- | --- |
-| 完整后端 pytest | **229 passed，21.54 秒** |
-| 后端总语句覆盖率 | **90%** |
-| recommendation_jobs.py / recommendation_api.py | **94% / 94%** |
-| Ruff 检查与格式 | 通过，39 个 Python 文件格式通过 |
-| 前端 ESLint / TypeScript | 通过 |
-| Next.js 生产构建 | 通过 |
-| Chromium 浏览器集成 | **13 passed，16.3 秒** |
-| 冻结检索评测 `--check` | 通过，与 v0.3 指标一致，0 次模型调用 |
-| 推荐 CLI `--once` | 空队列返回 idle；真实任务完成返回 completed |
-| 生产前端代理 + 独立 worker smoke | 通过，6 个有序事件、游标重放、幂等与访问保护 |
+| Python 后端全量回归 | **349 passed，40.04 秒** |
+| Python 语句覆盖率 | **92%**；provider usage 98%，provider checks 92%，provider HTTP 90% |
+| Ruff / 格式 / diff 空白检查 | 通过，48 个 Python 文件格式一致 |
+| ESLint / TypeScript | 通过 |
+| Next.js 16.4.2 production build | 通过 |
+| Playwright 浏览器集成 | **15 passed，25.1 秒** |
+| CLI + 真实 loopback HTTP 契约 | 通过，4 次模拟模型 HTTP 请求、0 次真实提供方调用 |
+| 冻结检索评测 | 通过；BM25 Recall@5=0.92、nDCG@5=0.88997、MRR@5=0.9，保持原基线 |
+| 真实目录副本桌面/手机视觉核验 | 通过，1440×1100 / 390×960，无横向溢出、页面 JS 异常或横幅加载失败 |
 
-后端新增 46 项测试，覆盖并发幂等创建、容量竞争、原子领取、租约失效、取消与完成竞争、重试次数、跨数据库引擎恢复、实际推荐图执行、超时、提供方取消、错误脱敏、数据库暂时故障和 SSE 清理。
+运行环境为 Python 3.12.14、Node 24.19.0。Playwright 官方下载在本执行环境返回了损坏归档，因此本地使用 Google 官方稳定版 Chrome 156.0.8078.47；CI 继续使用 Playwright 管理的 Chromium。中文字体仅补充在本地截图环境，产品和容器 TLS 检查未关闭。
 
-浏览器测试明确分为实际链路和故障 fixture：实际 API 验证排除大修、BM25 结果、任务刷新恢复、幂等、受保护结果、完整 SSE 及游标续接；四项显式路由 fixture 分别检验排队/取消、失败重试、连接中断后历史失败与新尝试的重放、提交响应丢失后遇到 429 的恢复。路由 fixture 不代表真实外部模型或多日运行证据。既有目录、官方画面切换、清单、代理边界与移动端检查继续通过。
+## 新增的关键覆盖
 
-## 独立复核与已修复问题
+1. **配置与协议**：空/部分字段、首尾空白、非法 URL、内嵌凭证、误填操作路径、端口、JSON 输出、截断、无效 usage、响应体上限、整个请求超时、重定向拒绝、取消与默认漏记账调用拒绝。
+2. **敏感数据**：上游在模型名或请求 ID 中回显密钥时清除；日志和健康响应不暴露配置值、URL、请求文本；无效 Unicode 不进入最终 UTF-8 业务响应；无效 key 的公开状态不尝试计算可失败的编码指纹。
+3. **跨进程额度**：四个独立连接和三个独立进程争用最后一个配额；失败、取消、无回执保持消耗；UTC 跨日、滚动分钟与等待锁后的窗口校验；数据库错误时拒绝调用。
+4. **真实图与降级**：配额耗尽时实际执行推荐图，LLM 不发 HTTP 且 engine=rules；有向量但 embedding 受限时不发 HTTP 且 method=bm25，仍保留来源目录候选。
+5. **严格 canary**：缺 --live、缺 key、空目录、额度不足、0 次工作、规则回退、未进入 hybrid、业务约束错误、摘要引用错误、Steam 空/错误类型/分页越界，都不能报验收成功。
+6. **运行隔离**：CLI 子进程通过 HTTP fixture 实际完成 LLM 与 embedding canary，达到共享四次配额后阻断新调用；检查原测试目录的摘要、向量、推荐任务和推荐结果没有被修改。
+7. **前端**：未配置、字段完整但无调用记录、最近成功、失败、调用暂停分开显示；不把 configured 当作模型可用。原有幂等提交、SSE 断点恢复、响应丢失恢复、取消、重试、历史和清单保持通过。
 
-1. **首次正文之前断连会泄漏 SSE 名额。** 只在异步生成器和 BackgroundTask 清理不足以覆盖响应头发送失败；改为响应调用层的 finally 释放，补充早期断开和取消回归。
-2. **提交响应丢失后，429 重放可能丢掉恢复凭证。** 限流发生在幂等查询之前，不能据此认定没有创建任务；前端保留原 token、幂等 key 和请求内容，之后继续恢复同一条请求。
-3. **旧失败事件会遮蔽后续重试。** 客户端不再遇到任意历史终态就提前结束，继续消费流至 EOF，并按递增事件编号应用新尝试和结果。
+两项交叉审查修复已进入回归：返回 JSON 中的未配对 Unicode surrogate，以及 canonical embedding alias 变化后的旧索引复用。
 
-这三项修复经独立复核，并纳入已经通过的后端或浏览器回归。
+## 真实目录与视觉证据
 
-## 真实目录与页面验收
+没有为这一轮添加合成生产 Mod，也没有新采集来源。使用已有 **101 条真实 Workshop 条目、18 条中文介绍** 的独立数据库副本，显式关闭 LLM/embedding/Steam key 与模型调用后进行视觉验证。隔离副本内提交“想玩震旦，增加新兵种，不要大型重做”完成推荐；原应用数据库的摘要、队列和向量均未被这次视觉测试修改。
 
-生产构建连接既有 **101 条真实 Workshop 目录，18 条作者中文摘录**。本轮没有重新采集，也没有将测试 fixture 导入默认数据库。截图使用桌面 1440×1100、手机 390×960；5 处捕获均无水平溢出、可见图片失败或 JavaScript 页面异常。
+- [桌面参谋状态](screenshots/provider-v5-desktop.jpg)
+- [手机参谋状态](screenshots/provider-v5-mobile.jpg)
 
-为观察实际排队状态，验收时先关闭 API 内嵌 worker：提交需求后确认数据库为 queued，刷新页面仍恢复同一任务，而且没有重复 POST。随后通过独立 `recommendation-worker --once` 执行同一任务，页面经 SSE 收到完成结果。这个暂停条件仅用于验收，没有在产品中加入模拟延迟或进度。
+截图保留官方战锤游戏横幅、猩红军旗、古铜边框和羊皮纸输入区。官方画面与具体 Mod 的预览/来源信息仍分开处理，来源见 [game-media.md](game-media.md)。页面中的“尚未配置”“尚无调用记录”来自真实接口，不是为截图伪造的成功状态。
 
-实际需求：**“想玩震旦，增加新兵种，不要大型重做”**。
+## 远端 CI 的检查内容
 
-- 任务 ID：`d93de0b0-a6a8-4bb6-b337-bd1c0b403729`。
-- 完成状态：completed，第 1 次执行，最后事件编号 6。
-- 解析/检索：`engine=rules`、`retrieval.method=bm25`；模型凭证关闭，没有外部模型调用。
-- 5 条候选：`2862938097`、`3823280996`、`3388312326`、`3031564620`、`3389974313`。
-- 完成后再次刷新及从本机历史选回，仍读取同一任务结果，没有重新执行。
+本次工作流新增 provider loopback 契约步骤、PostgreSQL 共享调用准入验证，以及 API 和推荐 worker 容器里的 preflight/usage 检查。四个 job 分别运行后端/PostgreSQL、前端构建、浏览器、完整 Compose。
 
-另创建一个真实排队任务，通过界面取消，服务器最终状态 cancelled，attempts=0、result=null；本机历史显示完成与取消两条记录。运行记录只存在于忽略的本地数据库，克隆仓库不会携带；任务凭证未写入截图说明或验收报告。
+远端是否成功以本版本具体提交对应的 [GitHub Actions](https://github.com/volcano-code/ModSage/actions/workflows/ci.yml) 为准；本文件中的本地通过结果不代替远端状态，也不引用旧提交的绿灯。本轮执行结束时在交付回复中提供准确提交与运行链接。
 
-截图：[桌面排队与官方画面](screenshots/recommend-v4-queued-desktop.jpg)、[手机排队](screenshots/recommend-v4-queued-mobile.jpg)、[实际推荐结果](screenshots/recommend-v4-completed-desktop.jpg)、[手机完成状态](screenshots/recommend-v4-completed-mobile.jpg)、[本机历史](screenshots/recommend-v4-history-mobile.jpg)。
+## 未执行与边界
 
-截图专用隔离浏览器 context 继续适配本地 HTTPS 检查代理，允许外部 Steam 图片的证书检查例外；产品、正式 E2E 和容器未关闭 TLS 验证。中文字体由临时 QA 环境提供。
+- **没有真实 LLM / embedding / Steam 认证 canary 结果**：缺少用户自行配置的凭证；工具已可运行，CI 全部使用明确的受控 fixture。
+- 中文生成的语义忠实度和游戏内汉化/兼容性不由 JSON 或引用校验自动证明，仍需要来源核验和游戏内验证。
+- 模型额度是共享调用次数，不是自动计算的货币账单；缺失 token 明确保持未知。没有证据支持真实成本或质量提升结论。
+- 当前配额值由进程启动环境提供，修改后必须共同重启 API、CLI 环境和所有 worker。
+- 没有运行公网生产部署、真实多日任务、生产数据库备份恢复或规模压测；运行手册提供具体操作，未把模板写成已完成的生产验证。
+- 账户、跨设备数据、通知、正式数据库列迁移、独立标注评测仍是独立产品演进项，不是第一次配置 key 的前置阻塞。
 
-生产代理 smoke 随后实际启动连续独立 worker，通过前端提交任务并得到 `queued → queued(领取) → understand → retrieve → verify → completed` 6 个事件，检查重放、相同请求返回相同任务、错误凭证 404，以及旧公开 `/runs` 无法读取新结果。
+## 可重现命令
 
-## PostgreSQL 与容器验证路径
+```bash
+.venv/bin/python -m pytest apps/api/tests --cov=modsage
+.venv/bin/python -m ruff check apps/api scripts
+.venv/bin/python -m ruff format --check apps/api scripts
+.venv/bin/python scripts/evaluate_retrieval.py --check
+.venv/bin/python scripts/provider_contract_smoke.py
+npm --prefix apps/web run lint
+npm --prefix apps/web run typecheck
+npm --prefix apps/web run build
+cd apps/web
+npm run test:e2e
+```
 
-本地没有 PostgreSQL 服务或 Docker daemon。新的 PostgreSQL smoke 已在隔离 SQLite 下预检，但该预检不当作 PostgreSQL 通过证据。
-
-CI 的 PostgreSQL 服务执行实际数据库验证：4 个连接竞争一个队列名额、同凭证与幂等标识并发提交、并发领取、超时接管、旧 owner 心跳与完成写入拒绝、同任务有界重试、重新创建数据库连接后的真实 worker 执行、事件重放、错误凭证拒绝及取消竞态。仅模型网络调用使用已有隔离假提供方；推荐任务 smoke 使用真实 BM25 图。
-
-容器 job 默认启动 API、前端、PostgreSQL 和独立推荐 worker，随后运行 `scripts/recommendation_job_smoke.py`。该脚本通过前端代理创建任务、等待实际 worker 完成、检查 SSE 序号与续接、验证新结果不能从旧公开接口读取。另保留可选目录刷新 worker 的空队列启动检查。
-
-四项远端检查为后端/PostgreSQL、前端构建、浏览器集成和 Docker Compose。实际结果应查看 [本版本对应的 GitHub Actions](https://github.com/volcano-code/ModSage/actions/workflows/ci.yml)；交付说明会引用已经核对的具体运行，不能以脚本存在替代执行结果。
-
-## 当前边界
-
-- 当前恢复单位是整个有界推荐任务；尚无节点检查点、外部调用恰好一次、账户同步或通知 Outbox。
-- 本机历史最多 20 条。丢失浏览器数据就会丢失任务访问凭证；服务端任务与事件暂未自动清理，正式公开运行需要保留和删除策略。
-- API 正常异步关闭会释放可恢复任务；独立 CLI 暂未转换 SIGTERM，容器停止后依赖租约到期接管，不能承诺立即重排。
-- SSE 有连接上限与单连接时限；进程内频率限制不是跨节点配额，公开部署仍需入口限流与账户体系。
-- 真实模型生成、认证 Steam QueryFiles、真实 embeddings 质量仍需凭证和后续实测。冻结检索标签是开发判断，不代表独立人工金标。
-- 正式数据库迁移、生产容量测试、连续多日刷新和游戏内兼容性验证尚未完成。
-- 代码已具备本地及 Compose 运行路径，提交 GitHub 不会自动产生公开托管网站。
+本地 XML、冻结评测、loopback 和视觉 JSON 报告保存在忽略的 artifacts 目录；远端 CI 上传测试报告工件。仓库不保存 Key、数据库或完整作者快照。

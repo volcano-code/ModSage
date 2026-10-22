@@ -11,7 +11,19 @@
 
 上图为 2026-10-21 连接已有真实目录的运行截图；首次克隆仍从空目录开始，通过下方命令自行同步。另见 [移动端](docs/screenshots/home-v3-mobile.jpg)、[帝国场景](docs/screenshots/home-v3-empire.jpg)、[派系入口](docs/screenshots/factions-v3-desktop.jpg)。主视觉使用官方 Steam 商店宣传画和游戏截图；来源、完整性与权利说明见 [官方画面清单](docs/game-media.md)。这些氛围素材与具体 Mod 的 Workshop 预览严格区分。
 
-## 当前版本：v0.4 可恢复推荐任务
+## 当前版本：v0.5 模型接入验收与调用控制
+
+v0.5 补齐真实服务接入前的工程链路：离线配置预检、显式小样本 canary、数据库共享调用额度、有限调用元数据，以及配置状态与最近实际调用的分开显示。无 key 的目录与推荐仍可运行；只有 `provider-check --live` 才会执行真实提供方验收。CI 使用明确标记的本地 HTTP 模拟服务，不会代为发起付费请求。
+
+```bash
+# 零联网检查；未配置模型时不会伪称模型已验证。
+.venv/bin/python -m modsage.cli preflight
+.venv/bin/python -m modsage.cli usage --limit 10
+```
+
+完整操作见 [模型接入、隔离验收与配额](docs/provider-readiness.md) 和 [运行、升级与备份](docs/operations.md)。实际界面：[桌面服务状态](docs/screenshots/provider-v5-desktop.jpg)、[手机服务状态](docs/screenshots/provider-v5-mobile.jpg)；截图使用真实目录副本，外部模型关闭。
+
+### 已有战役界面与推荐任务
 
 首页可切换冰雪与混沌、震旦长垣、帝国艾斯佩斯三组官方画面，并从帝国、震旦、基斯里夫入口直接搜索对应模组。探索、需求推荐与清单页也使用官方场景横幅；猩红军旗、古铜铁框与羊皮纸内容区组成统一的战役档案界面。数据来自实际接口，装饰内容不充当 Mod 证据。
 
@@ -31,7 +43,11 @@
 | 中英术语、字段加权 BM25 与匹配证据 | 默认完全本地运行；派系、排除项及必要语言条件先过滤，再召回 |
 | 可选向量索引、精确余弦检索与 RRF 融合 | 需要单独配置服务并手动回填；已做 provider mock 与数据库验证，尚无真实向量质量验收，不是 pgvector/ANN 或神经重排 |
 | 冻结检索评测与 CI 报告 | 42 条真实来源短文本、28 条需求；开发判断标签，不能替代独立人工标注与用户实验 |
-| 可配置模型的需求解析、中文介绍生成 | 不附带模型 key；真实模型连通性需在配置后验证，错误会明确退化 |
+| 可配置模型的需求解析、中文介绍生成 | 支持明确的 Chat Completions 协议参数；不附带 key，真实质量需配置后验收 |
+| 离线预检与显式真实 canary | 缺 key、空目录、0 次处理、规则/BM25 回退都不能通过真实验收；临时样本不改生产目录 |
+| 跨 API/worker/CLI 的模型调用次数额度 | 数据库原子准入，失败/取消/无回执仍占次数；上限来自各进程一致的启动配置 |
+| 调用延迟、状态、返回模型与实际 usage 记录 | 缺失 token 保持未知，不保存 prompt/key/原始响应；次数限额不冒充货币消费上限 |
+| 前端参谋服务状态 | 分开显示未配置、配置待核验、最近调用与暂停；当前结果仍以实际 engine/method 为准 |
 | 中文原文摘录 | 标记为来源中文，不冒充机器翻译；不据此认定游戏内汉化 |
 | 日报构建与读取 | 使用收录目录的时间与可用指标；不伪造历史增长率 |
 | 每日目录刷新 worker、持久化任务和恢复 | 上海时区调度、幂等入队、原子领取、租约与重试；需启动独立 worker，默认关闭自动排队 |
@@ -124,7 +140,17 @@ MODSAGE_LLM_API_KEY=your-private-key
 ```
 
 地址需提供兼容 `POST /chat/completions` 的服务。项目不会替你提供或猜测真实 key。
-配置后运行 `.venv/bin/python -m modsage.cli enrich --help`，按批次生成中文介绍。
+配置后先执行离线预检，再显式运行小样本真实验收：
+
+```bash
+.venv/bin/python -m modsage.cli preflight
+.venv/bin/python -m modsage.cli provider-check --scope llm --live
+.venv/bin/python -m modsage.cli usage --limit 10
+# 人工核对 canary 的生成介绍和原文引用后，正式生成一条：
+.venv/bin/python -m modsage.cli enrich --limit 1
+```
+
+canary 最多发送 2 次模型请求，使用真实目录的临时副本，不改写生产介绍或推荐记录。缺目录或回退规则会明确失败。模型输出 token 字段、可省略 temperature、错误分类和其余 scope 见 [接入说明](docs/provider-readiness.md)。
 模型生成结果必须保留证据引用；界面仍将游戏内中文与兼容性独立显示为未知，除非存在对应事实。
 
 ### 可选混合检索
@@ -134,6 +160,8 @@ MODSAGE_LLM_API_KEY=your-private-key
 ```dotenv
 MODSAGE_EMBEDDING_BASE_URL=https://your-provider.example/v1
 MODSAGE_EMBEDDING_MODEL=your-embedding-model
+# 若网关返回不同 canonical 模型名，可显式设置；默认留空。
+MODSAGE_EMBEDDING_RESPONSE_MODEL=
 MODSAGE_EMBEDDING_API_KEY=your-private-key
 # 仅当服务支持且需要固定输出维度时填写。
 MODSAGE_EMBEDDING_DIMENSIONS=
@@ -141,6 +169,7 @@ MODSAGE_RETRIEVAL_MODE=hybrid
 ```
 
 ```bash
+.venv/bin/python -m modsage.cli provider-check --scope embedding --live
 .venv/bin/python -m modsage.cli embedding-status
 .venv/bin/python -m modsage.cli embed --limit 20 --batch-size 8
 .venv/bin/python -m modsage.cli embedding-status
@@ -185,6 +214,7 @@ Compose 默认启动 PostgreSQL、API、前端和独立推荐 worker，并将所
 .venv/bin/python -m ruff check apps/api scripts
 .venv/bin/python -m ruff format --check apps/api scripts
 .venv/bin/python scripts/evaluate_retrieval.py --check
+.venv/bin/python scripts/provider_contract_smoke.py
 npm --prefix apps/web run lint
 npm --prefix apps/web run typecheck
 npm --prefix apps/web run build
@@ -198,7 +228,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-CI 包含后端与冻结评测、真实 PostgreSQL 的队列容量约束、并发幂等入队/领取、租约恢复、取消和旧 worker 写入隔离，以及向量 JSON 读写与过期回退检查。浏览器验收包含真实 API 的推荐与 SSE 回放，并单独用显式模拟的传输故障检验断线续接、提交响应丢失和恢复界面。完整 Docker Compose 还通过前端代理提交任务，等待独立 worker 完成并检查 SSE 事件。CI 不调用真实 Steam 或模型服务。请以 Actions 中具体提交的结果为准。
+CI 包含后端与冻结评测、真实 PostgreSQL 的队列容量约束、并发幂等入队/领取、租约恢复、取消和旧 worker 写入隔离，以及向量 JSON 读写与过期回退检查。浏览器验收包含真实 API 的推荐与 SSE 回放，并单独用显式模拟的传输故障检验断线续接、提交响应丢失和恢复界面。完整 Docker Compose 还通过前端代理提交任务，等待独立 worker 完成并检查 SSE 事件，以及 API/worker 内的离线 provider 预检。Provider 契约测试使用本地 HTTP fixture 和实际 CLI 子进程，验证真实请求格式、严格 canary、共享额度及生产数据不改写。CI 不调用真实 Steam 或模型服务。请以 Actions 中具体提交的结果为准。
 
 ## 目录
 
@@ -214,7 +244,7 @@ CI 包含后端与冻结评测、真实 PostgreSQL 的队列容量约束、并�
 ## 下一阶段验收
 
 1. 配置实际可用的 Steam QueryFiles key，验证认证发现、分页和字段覆盖。
-2. 配置模型并完成中文生成的真实 canary 与人工来源核验。
+2. 使用已实现的 `provider-check --live` 完成真实提供方验收与人工来源核验；接入工具已具备，实际结果待配置后产生。
 3. 扩大独立标注的中文需求集，实测向量/混合检索质量、延迟与成本，再决定 ANN 索引和重排方案。
 4. 增加用户账户、跨设备任务历史、任务保留与清理策略、通知 Outbox，并引入正式数据库迁移。
 5. 记录连续运行、更新覆盖、失败补偿和实际成本。
