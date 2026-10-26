@@ -1,11 +1,11 @@
-# ModSage v0.5 implementation contract
+# ModSage v0.6 implementation contract
 
 Backend: `apps/api/modsage`, FastAPI + SQLAlchemy; Next.js client: `apps/web`.
 All timestamps are UTC ISO-8601. Workshop IDs are strings. Source text is untrusted.
 No synthetic records in the default application. Empty/error states must remain honest.
 
 ## Public API
-- GET `/api/v1/health` -> `{status, version, database, llm_configured, steam_discovery_configured, embedding_configured, retrieval_mode:'bm25'|'hybrid', providers:{llm:ProviderStatus,embedding:ProviderStatus}}`. Configuration flags do not establish provider connectivity or actual execution.
+- GET `/api/v1/health` -> `{status, version, database, schema:{status:'current',current_revision,head_revision}, llm_configured, steam_discovery_configured, embedding_configured, retrieval_mode:'bm25'|'hybrid', providers:{llm:ProviderStatus,embedding:ProviderStatus}}`. Configuration flags do not establish provider connectivity or actual execution. Startup validates structure under the migration lock; each health request reads the recorded revision, returning sanitized 503 if storage or revision is unavailable/mismatched. Health does not rerun structural reflection or migrations.
 - GET `/api/v1/stats` -> `{total_mods, chinese_summaries, last_synced_at, data_source, discovery_available}`. `last_synced_at` is the oldest successful fetch among stored mods, a conservative coverage boundary, not the last single-item refresh.
 - GET `/api/v1/mods?q=&category=&sort=updated&page=1&page_size=12` -> `{items: Mod[], total, page, page_size}`. Sort: updated, newest, popular (only when metric available), relevant. Search includes original title, Chinese summary, tags. No fabricated popularity.
 - GET `/api/v1/mods/{id}` -> Mod (with evidence[] and relations[]).
@@ -43,6 +43,10 @@ Do not put Workshop HTML template warnings into compatibility status. Summary is
 `RetrievalEvidence = {lexical_score:number, semantic_score:number|null, matched_terms:string[], channels:('lexical'|'semantic')[]}`. BM25, cosine and RRF scores have different scales; none is a probability, compatibility confidence or a score comparable across queries. A source can appear in one or both channels. UI must tolerate missing metadata in historical runs and show actual execution rather than configured capability.
 
 ## Protected ingestion / CLI
+
+Database maintenance (v0.6): `db-status` is read-only and exits zero only for a current validated schema; missing SQLite files/directories are not created. `db-upgrade` and compatible `init-db` run locked, versioned migrations; empty databases are created and exact v0.5 schemas are adopted after verification. Unknown versions and structural drift fail closed. Ordinary API/worker startup uses the same guarded initialization. App version and schema revision are distinct.
+
+`backup-db --output NEW_PATH` backs up the configured SQLite source before any initialization/migration. `restore-db --input BACKUP_PATH --output NEW_PATH` restores only into a new file and does not load provider configuration or change the configured DB. Both verify schema, SQLite integrity and foreign keys, refuse existing targets, and expose no row contents or credentials. PostgreSQL uses `pg_dump`/`pg_restore`; these SQLite commands refuse PostgreSQL before connecting. Restore does not replay queued tasks or refund provider usage. Error codes are bounded and safe; a rare `publication_durability_unknown` means the verified target exists but directory durability could not be confirmed.
 Admin HTTP endpoints, if added, require a configured non-empty `MODSAGE_ADMIN_TOKEN` and Bearer token. CLI `python -m modsage.cli init-db`, `sync --ids ...`, `discover --limit 50`, `digest`, `enrich --limit ...` operate locally. Real snapshots live in ignored local DB/data, not committed raw author content.
 
 Refresh CLI: `enqueue-refresh [--key ASCII_KEY] [--source api|public]`, `worker [--once]`, `jobs [--limit 20]`. Equal key and options reuse the existing job; conflicting options on an existing key fail. The worker uses the same database as the API. With automatic refresh disabled, `worker --once` handles only previously enqueued work and exits normally on an empty queue. This refresh queue is distinct from the recommendation queue.

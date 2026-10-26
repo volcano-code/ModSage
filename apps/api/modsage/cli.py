@@ -5,8 +5,10 @@ import logging
 import re
 import sys
 
+from sqlalchemy import create_engine
+
 from modsage.config import get_settings
-from modsage.database import init_database, make_database
+from modsage.database import init_database, make_database, schema_status
 from modsage.digests import build_digest
 from modsage.embeddings import backfill_embeddings, embedding_status
 from modsage.enrichment import enrich_mods
@@ -52,10 +54,12 @@ async def execute(args, settings, session_factory):
         return await backfill_embeddings(
             session_factory, settings, limit=args.limit, batch_size=args.batch_size
         )
-    if args.command == "init-db":
+    if args.command in {"init-db", "db-upgrade"}:
         from modsage import __version__
 
-        return {"status": "ready", "schema_version": __version__}
+        with session_factory() as session:
+            schema = schema_status(session.get_bind())
+        return {"status": "ready", "application_version": __version__, "schema": schema}
     if args.command == "enqueue-refresh":
         return enqueue_refresh(
             session_factory, settings, idempotency_key=args.key, source=args.source
@@ -142,8 +146,24 @@ def main():
     )
     embed.add_argument("--limit", type=int, default=20, choices=range(1, 201), metavar="1..200")
     embed.add_argument("--batch-size", type=int, default=8, choices=range(1, 17), metavar="1..16")
+    subs.add_parser("init-db", help="Initialize or safely upgrade a supported database schema")
+    subs.add_parser("db-upgrade", help="Apply the versioned database migration under a lock")
     subs.add_parser(
-        "init-db", help="Initialize the database, including additive refresh-job tables"
+        "db-status", help="Inspect database revision and structure without modifying it"
+    )
+    backup = subs.add_parser("backup-db", help="Verify a SQLite backup written only to a NEW path")
+    backup.add_argument(
+        "--output", required=True, help="New backup file; existing paths are refused"
+    )
+    restore = subs.add_parser(
+        "restore-db",
+        help="Restore a SQLite backup into a NEW file; never overwrite a live database",
+    )
+    restore.add_argument(
+        "--input", required=True, help="Existing SQLite backup to verify and restore"
+    )
+    restore.add_argument(
+        "--output", required=True, help="New restored file; existing paths are refused"
     )
     enqueue = subs.add_parser("enqueue-refresh", help="Queue one persistent daily-style refresh")
     enqueue.add_argument(
@@ -188,11 +208,35 @@ def main():
     logging.getLogger("modsage.recommendation_jobs").setLevel(logging.INFO)
     engine = None
     try:
-        settings = get_settings()
-        engine, session_factory = make_database(settings.database_url)
-        init_database(engine)
-        result = asyncio.run(execute(args, settings, session_factory))
+        if args.command == "restore-db":
+            from modsage.backups import restore_sqlite
+
+            # Restoring an offline file does not require valid provider settings or a live DB.
+            result = restore_sqlite(args.input, args.output)
+        else:
+            settings = get_settings()
+            if args.command == "backup-db":
+                from modsage.backups import backup_sqlite
+
+                # Back up before migration: never run init_database against the source here.
+                result = backup_sqlite(settings.database_url, args.output)
+            elif args.command == "db-status":
+                # Unlike make_database, this does not create SQLite parent directories.
+                engine = create_engine(settings.database_url)
+                result = {
+                    "kind": "database_schema",
+                    **schema_status(engine),
+                    "external_provider_calls": 0,
+                }
+            else:
+                engine, session_factory = make_database(settings.database_url)
+                migration = init_database(engine)
+                result = asyncio.run(execute(args, settings, session_factory))
+                if args.command in {"init-db", "db-upgrade"}:
+                    result["migration_action"] = migration.get("action")
         print(json.dumps(result, ensure_ascii=False, indent=2))
+        if args.command == "db-status" and result.get("status") != "current":
+            return 1
         if result.get("errors") or result.get("status") in {
             "partial",
             "failed",
@@ -205,11 +249,20 @@ def main():
     except Exception as exc:
         from pydantic import ValidationError
 
+        from modsage.backups import BackupError
+        from modsage.database import SchemaMigrationError
         from modsage.embeddings import EmbeddingUnavailable
         from modsage.llm import ModelUnavailable
         from modsage.sources.steam import SteamConfigurationError
 
-        if isinstance(exc, ValidationError):
+        error_code = None
+        if isinstance(exc, (SchemaMigrationError, BackupError)):
+            error_code = exc.code
+            hint = (
+                "数据库检查或备份恢复未通过；没有覆盖已有目标文件。"
+                "请按错误码和运行手册核对结构、版本、文件路径与权限。"
+            )
+        elif isinstance(exc, ValidationError):
             hint = "配置校验失败；请检查环境变量类型、范围和必填项。出于保密，不输出原始配置值。"
         elif isinstance(exc, EmbeddingUnavailable):
             hint = "请配置 MODSAGE_EMBEDDING_API_KEY、MODSAGE_EMBEDDING_BASE_URL、MODSAGE_EMBEDDING_MODEL；向量回填不会自动借用对话模型配置。"
@@ -221,7 +274,12 @@ def main():
             hint = "操作失败；既有目录不会被空响应替换。请检查输入与来源可用性。"
         print(
             json.dumps(
-                {"status": "failed", "error_type": type(exc).__name__, "message": hint},
+                {
+                    "status": "failed",
+                    "error_type": type(exc).__name__,
+                    "error_code": error_code,
+                    "message": hint,
+                },
                 ensure_ascii=False,
             ),
             file=sys.stderr,

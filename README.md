@@ -11,7 +11,22 @@
 
 上图为 2026-10-21 连接已有真实目录的运行截图；首次克隆仍从空目录开始，通过下方命令自行同步。另见 [移动端](docs/screenshots/home-v3-mobile.jpg)、[帝国场景](docs/screenshots/home-v3-empire.jpg)、[派系入口](docs/screenshots/factions-v3-desktop.jpg)。主视觉使用官方 Steam 商店宣传画和游戏截图；来源、完整性与权利说明见 [官方画面清单](docs/game-media.md)。这些氛围素材与具体 Mod 的 Workshop 预览严格区分。
 
-## 当前版本：v0.5 模型接入验收与调用控制
+## 当前版本：v0.6 本地部署、数据库迁移与恢复验收
+
+v0.6 增加 Alembic 版本化数据库迁移、旧 v0.5 结构核对与无损接管、只读版本检查、SQLite 可验证备份/恢复，以及不依赖额外 Python 包的本机诊断工具。启动时核对数据库结构，未知版本或结构不一致会停止；恢复只允许写入新文件。新建 `.env` 与 Compose 默认关闭模型调用，首次本地验收无需 API Key。
+
+**第一次在自己的电脑运行，请按 [本地部署与验收](docs/local-deployment.md) 执行。** 提供 Ubuntu 原生和 Docker 两条路径、重启后的恢复命令、真实目录导入、备份与失败排查。
+
+```bash
+python3 scripts/local_check.py doctor --mode native
+.venv/bin/python -m modsage.cli db-status
+# 服务启动后只读检查；--exercise 另外提交一个明确标记的本地验收任务。
+python3 scripts/local_check.py running --base-url http://127.0.0.1:3000
+```
+
+数据库版本和应用版本分别记录；当前 baseline 是 `0001_v05_baseline`，不是把应用版本号当作迁移记录。已有数据库更新前先阅读 [运行与更新手册](docs/operations.md)。
+
+### 已有模型接入验收与调用控制
 
 v0.5 补齐真实服务接入前的工程链路：离线配置预检、显式小样本 canary、数据库共享调用额度、有限调用元数据，以及配置状态与最近实际调用的分开显示。无 key 的目录与推荐仍可运行；只有 `provider-check --live` 才会执行真实提供方验收。CI 使用明确标记的本地 HTTP 模拟服务，不会代为发起付费请求。
 
@@ -54,6 +69,9 @@ v0.5 补齐真实服务接入前的工程链路：离线配置预检、显式小
 | 公开同步状态 | 分别显示任务、计划和最近 worker 心跳；部分完成不冒充完整成功 |
 | 浏览器本机清单、前置检查 | 无跨设备账户同步；未知前置和未知兼容性会明确提示 |
 | SQLite 本地启动、PostgreSQL Compose、CI | 后续仍需真实连续运行、生产部署与规模压测 |
+| Alembic 版本化迁移与旧库结构核验 | 支持空库及结构完整的 v0.5；未知版本/结构差异停止，不自动改写任意旧库 |
+| SQLite 备份与恢复到新文件 | 校验完整性、外键和 schema；不覆盖在线库，不自动重放恢复的任务 |
+| 本地环境与实际运行检查 | 服务、目录数据和推荐任务分别验收；云端通过不代替用户电脑的检查 |
 
 Next.js + React + TypeScript / FastAPI + SQLAlchemy / LangGraph。
 详见 [架构与边界](docs/architecture.md)、[API 契约](docs/API_CONTRACT.md)、[推荐任务运行说明](docs/recommendation-tasks.md)、[检索配置](docs/retrieval.md)、[冻结评测](docs/retrieval-evaluation.md)、[每日刷新](docs/daily-refresh.md)、[数据实测](docs/data-access-report.md)、[验证记录](docs/verification.md)。
@@ -61,6 +79,8 @@ Next.js + React + TypeScript / FastAPI + SQLAlchemy / LangGraph。
 ## 快速启动
 
 需要 Python 3.12+、Node.js 22+。从仓库根目录执行：
+
+首次配置请使用 [本地部署文档](docs/local-deployment.md) 中的非覆盖创建方式；已有 `.env` 需要保留。以下是开发环境的核心命令：
 
 ```bash
 python3 -m venv .venv
@@ -137,10 +157,11 @@ API 与 worker 必须使用同一数据库。Compose 默认以独立 `recommenda
 MODSAGE_LLM_BASE_URL=https://your-provider.example/v1
 MODSAGE_LLM_MODEL=your-accessible-model
 MODSAGE_LLM_API_KEY=your-private-key
+MODSAGE_PROVIDER_CALLS_ENABLED=true
 ```
 
 地址需提供兼容 `POST /chat/completions` 的服务。项目不会替你提供或猜测真实 key。
-配置后先执行离线预检，再显式运行小样本真实验收：
+新建环境默认关闭模型调用；确认目录与额度后，在全部模型调用进程中显式启用上述开关并重启。配置后先执行离线预检，再显式运行小样本真实验收：
 
 ```bash
 .venv/bin/python -m modsage.cli preflight
@@ -195,7 +216,7 @@ MODSAGE_RETRIEVAL_MODE=hybrid
 ### Docker Compose
 
 ```bash
-cp .env.example .env
+# 先按 docs/local-deployment.md 第 1 节创建 .env，已有文件原样保留。
 docker compose up --build -d
 docker compose exec api python -m modsage.cli discover --public --limit 50
 docker compose exec api python -m modsage.cli digest
@@ -215,6 +236,7 @@ Compose 默认启动 PostgreSQL、API、前端和独立推荐 worker，并将所
 .venv/bin/python -m ruff format --check apps/api scripts
 .venv/bin/python scripts/evaluate_retrieval.py --check
 .venv/bin/python scripts/provider_contract_smoke.py
+.venv/bin/python scripts/backup_restore_smoke.py
 npm --prefix apps/web run lint
 npm --prefix apps/web run typecheck
 npm --prefix apps/web run build
@@ -229,6 +251,8 @@ npm run test:e2e
 ```
 
 CI 包含后端与冻结评测、真实 PostgreSQL 的队列容量约束、并发幂等入队/领取、租约恢复、取消和旧 worker 写入隔离，以及向量 JSON 读写与过期回退检查。浏览器验收包含真实 API 的推荐与 SSE 回放，并单独用显式模拟的传输故障检验断线续接、提交响应丢失和恢复界面。完整 Docker Compose 还通过前端代理提交任务，等待独立 worker 完成并检查 SSE 事件，以及 API/worker 内的离线 provider 预检。Provider 契约测试使用本地 HTTP fixture 和实际 CLI 子进程，验证真实请求格式、严格 canary、共享额度及生产数据不改写。CI 不调用真实 Steam 或模型服务。请以 Actions 中具体提交的结果为准。
+
+v0.6 另加入 SQLite 实际备份恢复、容器内本地部署检查，以及 PostgreSQL 隔离数据库的四进程旧库接管和真实 `pg_dump`/`pg_restore`。恢复前后的全部表记录通过规范化哈希比较，测试夹具不进入应用生产目录。
 
 ## 目录
 
@@ -246,7 +270,7 @@ CI 包含后端与冻结评测、真实 PostgreSQL 的队列容量约束、并�
 1. 配置实际可用的 Steam QueryFiles key，验证认证发现、分页和字段覆盖。
 2. 使用已实现的 `provider-check --live` 完成真实提供方验收与人工来源核验；接入工具已具备，实际结果待配置后产生。
 3. 扩大独立标注的中文需求集，实测向量/混合检索质量、延迟与成本，再决定 ANN 索引和重排方案。
-4. 增加用户账户、跨设备任务历史、任务保留与清理策略、通知 Outbox，并引入正式数据库迁移。
+4. 增加用户账户、跨设备任务历史、任务保留与清理策略、通知 Outbox；后续 schema 变更使用已经引入的版本化迁移。
 5. 记录连续运行、更新覆盖、失败补偿和实际成本。
 
 ModSage 是独立玩家项目，与 Valve、Creative Assembly 和 Games Workshop 无隶属关系。Mod 内容归其作者及相应权利人所有，保留 Steam 与作者原始链接。

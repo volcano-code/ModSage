@@ -10,6 +10,7 @@ from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select, text
+from sqlalchemy.exc import SQLAlchemyError
 
 from modsage import __version__
 from modsage.catalog import iso, list_mods, serialize_mod
@@ -48,7 +49,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app):
-        init_database(engine)
+        app.state.schema = init_database(engine)
         worker = None
         if settings.recommendation_worker_enabled:
             worker = asyncio.create_task(run_recommendation_worker(session_factory, settings))
@@ -104,12 +105,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/v1/health")
     def health():
-        with session_factory() as session:
-            session.execute(text("SELECT 1"))
+        # Full structure validation happens at startup. Poll only the revision here;
+        # the health check must not migrate or perform dozens of schema reflections.
+        try:
+            with session_factory() as session:
+                revisions = list(session.scalars(text("SELECT version_num FROM alembic_version")))
+        except SQLAlchemyError:
+            raise HTTPException(503, "数据库状态暂不可用，请检查部署和迁移状态。") from None
+        expected = app.state.schema["head_revision"]
+        if revisions != [expected]:
+            raise HTTPException(503, "数据库版本与应用不一致，请检查迁移状态。")
         return {
             "status": "ok",
             "version": __version__,
             "database": "ok",
+            "schema": {
+                "status": "current",
+                "current_revision": expected,
+                "head_revision": expected,
+            },
             "llm_configured": settings.llm_configured,
             "embedding_configured": settings.embedding_configured,
             "retrieval_mode": settings.retrieval_mode,

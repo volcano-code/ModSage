@@ -32,6 +32,7 @@ export default defineConfig({
         MODSAGE_STEAM_API_KEY: "",
         MODSAGE_EMBEDDING_API_KEY: "",
         MODSAGE_EMBEDDING_MODEL: "",
+        MODSAGE_PROVIDER_CALLS_ENABLED: "false",
         MODSAGE_RETRIEVAL_MODE: "bm25",
         MODSAGE_REFRESH_ENABLED: "false",
         MODSAGE_RECOMMENDATION_WORKER_ENABLED: "true",

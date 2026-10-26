@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 
-from modsage.database import init_database, make_database
+from modsage.database import init_database, make_database, schema_status
 from modsage.embeddings import EmbeddingClient, backfill_embeddings, embedding_status
 from modsage.enrichment import generate_summary
 from modsage.llm import ModelClient
@@ -61,6 +61,7 @@ def preflight(session_factory, settings) -> dict:
         "issues": [],
     }
     with session_factory() as session:
+        database_schema = schema_status(session.get_bind())
         catalog = {
             "total": _count(session, Mod),
             "with_source_description": _count(session, Mod, func.length(Mod.description) >= 20),
@@ -112,6 +113,7 @@ def preflight(session_factory, settings) -> dict:
         "status": "failed" if errors else "ready",
         "network_calls": 0,
         "live_verified": False,
+        "database_schema": database_schema,
         "providers": providers,
         "catalog": catalog,
         "embedding_index": index,

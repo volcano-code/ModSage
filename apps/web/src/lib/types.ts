@@ -67,6 +67,11 @@ export interface Health {
   status: string;
   version: string;
   database: string;
+  schema?: {
+    status: "current";
+    current_revision: string;
+    head_revision: string;
+  };
   llm_configured: boolean;
   steam_discovery_configured: boolean;
   embedding_configured?: boolean;

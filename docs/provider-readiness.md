@@ -4,6 +4,8 @@ v0.5 提供离线预检、显式真实调用验收、持久化调用记录和跨
 
 本文命令从仓库根目录执行。凭证只进入根目录 `.env` 或服务端环境；不进入浏览器环境、URL、截图或 Git。不要把含凭证的 `docker compose config` 完整输出分享出去，校验语法使用 `docker compose config --quiet`。
 
+v0.6 的 `.env.example` 和 Compose 默认 `MODSAGE_PROVIDER_CALLS_ENABLED=false`，适合先完成无 Key 本地部署。执行下面的 LLM/embedding 真实 canary 前，需要显式改成 `true`，并统一重建 API 和所有 worker；仅填写 Key 不会打开总开关。已有进程环境不会被新示例自动覆盖。Steam 来源读取不使用此模型调用开关，仍按显式命令与刷新配置执行。
+
 ## 1. 先运行零联网预检
 
 ```bash

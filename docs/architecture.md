@@ -1,6 +1,6 @@
 # Architecture and delivery boundaries
 
-## v0.4
+## Current application (v0.6)
 
 One FastAPI codebase owns catalog, source snapshots, structured facts, recommendation runs, refresh jobs and digest editions. Next.js renders the Chinese UI and proxies only an explicit public API allowlist. A CLI performs controlled ingestion and enrichment; a separate worker executes durable catalog refreshes. SQLite supports a minimal local setup; PostgreSQL is the deployment target in Compose.
 
@@ -26,7 +26,7 @@ The scheduler uses `Asia/Shanghai` dates and catches up only the current due day
 
 Provider calls occur outside database transactions. Stage results and their database changes commit together. Before import has committed, a retry repeats bounded discovery to restore the source adapter's in-memory metadata; after import it resumes later stages. Model attempts are recorded before a request so recovering the same job does not repeatedly charge the same item. A crash can therefore leave an attempted item without a generated summary, reported as incomplete. This is not a claim of exactly-once external network execution.
 
-The lease serializes these refresh workers, not every possible manual CLI or external database writer. Avoid launching manual ingestion against the same catalog while a refresh is active. This release adds new tables through the existing initialization path without altering existing columns; schema migrations remain a future requirement. Operational commands and configuration are in [daily-refresh.md](daily-refresh.md).
+The lease serializes these refresh workers, not every possible manual CLI or external database writer. Avoid launching manual ingestion against the same catalog while a refresh is active. Versioned initialization and schema validation are described below; job recovery does not repair unknown database structures. Operational commands and configuration are in [daily-refresh.md](daily-refresh.md).
 
 ## Durable recommendation execution
 
@@ -59,6 +59,18 @@ API-based discovery and a bounded public-page fallback must be identified separa
 ## Deployment model
 
 The Compose defaults bind the database, API and frontend to loopback for local evaluation. Public hosting requires a suitable HTTPS reverse proxy, production secrets and a database backup policy. CI and a local browser check validate specific configurations; neither substitutes for multi-day production observation.
+
+## Database lifecycle and local acceptance (v0.6)
+
+Alembic owns the immutable `0001_v05_baseline` revision, packaged with the API wheel. It contains the frozen 16-table v0.5 schema rather than importing mutable ORM metadata. Empty databases are created by the revision. An unversioned complete v0.5 schema is structurally checked before being stamped; missing/unknown objects or revisions block startup. Earlier partial schemas, including a v0.4 schema without the provider ledger, are not silently completed. Future schema changes need a new revision and an explicit supported upgrade path.
+
+SQLite `BEGIN IMMEDIATE` or a PostgreSQL transaction advisory lock serializes initialization across processes, with bounded waits. A process-local lock protects Alembic's shared command environment. Inspection, DDL/stamping and the final validation share the migration transaction. API, CLI and workers use the same entry point; no unsupported downgrade is provided. Read-only `db-status` does not initialize or create a missing SQLite file. Full validation happens at startup; health reads only the recorded revision and returns a sanitized 503 for an unavailable or mismatched version.
+
+SQLite backups use the online backup API and read-only source connections. A temporary destination must pass schema, integrity and foreign-key validation before an atomic, non-overwriting publish with restrictive permissions. Restore is a verified copy into a new file, not replacement of an active database or automatic queue replay. A restored ledger preserves reserved attempts, but an old snapshot cannot account for calls made after that snapshot. PostgreSQL deployments use native dump/restore; CI compares the complete semantic contents of isolated source and restored databases.
+
+The local doctor is a standard-library-only script. It checks the selected native or Docker runtime, directory permissions and relevant ports without installing software or changing configuration. The default running check only reads the frontend/proxy/health/catalog/local art. Explicit `--exercise` creates one clearly labeled recommendation task and validates idempotency, the worker, durable SSE replay and capability protection; it requires observed providers to be unconfigured and disabled. It does not claim knowledge of independent worker configuration or real provider billing.
+
+Native production startup uses Next's generated standalone server, copying the static and public assets in the same layout as the Docker runner. The launcher preserves server-side `.env.local` loading, defaults to loopback, validates its port/host arguments and forwards termination signals. Docker retains its direct `node server.js` entry point. See [local deployment](local-deployment.md) and [operations](operations.md) for exact commands and reboot/upgrade procedures.
 
 ## Provider admission and readiness (v0.5)
 

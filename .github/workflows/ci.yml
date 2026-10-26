@@ -52,6 +52,8 @@ jobs:
         run: python scripts/evaluate_retrieval.py --check --output artifacts/retrieval-evaluation.json
       - name: Provider contract through loopback HTTP and real CLI processes
         run: python scripts/provider_contract_smoke.py > artifacts/provider-contract.json
+      - name: SQLite verified backup and restore without provider calls
+        run: python scripts/backup_restore_smoke.py > artifacts/sqlite-backup-restore.json
       - name: PostgreSQL smoke
         env:
           MODSAGE_DATABASE_URL: postgresql+psycopg://modsage:ci-local-password@127.0.0.1:5432/modsage_ci
@@ -68,6 +70,7 @@ jobs:
             artifacts/coverage.xml
             artifacts/retrieval-evaluation.json
             artifacts/provider-contract.json
+            artifacts/sqlite-backup-restore.json
 
   frontend:
     name: Frontend quality and production build
@@ -152,15 +155,56 @@ jobs:
         run: python3 scripts/recommendation_job_smoke.py --base-url http://127.0.0.1:3000
       - name: Offline provider readiness in API and worker containers
         run: |
+          docker compose exec -T api python -m modsage.cli db-status
           docker compose exec -T api python -m modsage.cli preflight
           docker compose exec -T recommendation-worker python -m modsage.cli preflight
           docker compose exec -T api python -m modsage.cli usage --limit 1
+      - name: Local deployment acceptance through the actual frontend and worker
+        run: |
+          mkdir -p artifacts
+          python3 scripts/local_check.py running --base-url http://127.0.0.1:3000 --exercise > artifacts/local-deployment.json
+      - name: PostgreSQL legacy migration and real dump restore into a new database
+        run: |
+          docker compose exec -T db createdb -U modsage modsage_restore_source
+          docker compose exec -T db createdb -U modsage modsage_restore_target
+          docker compose exec -T -e MODSAGE_RESTORE_SMOKE=1 -e MODSAGE_DATABASE_URL="postgresql+psycopg://modsage:${POSTGRES_PASSWORD}@db:5432/modsage_restore_source" api python - --prepare < scripts/postgres_restore_smoke.py > artifacts/postgres-restore-source.json
+          docker compose exec -T db pg_dump -U modsage -Fc modsage_restore_source > artifacts/postgres-restore-fixture.dump
+          docker compose exec -T db pg_restore -U modsage --no-owner --no-acl --exit-on-error --single-transaction --dbname=modsage_restore_target < artifacts/postgres-restore-fixture.dump
+          docker compose exec -T -e MODSAGE_RESTORE_SMOKE=1 -e MODSAGE_DATABASE_URL="postgresql+psycopg://modsage:${POSTGRES_PASSWORD}@db:5432/modsage_restore_target" api python - --inspect < scripts/postgres_restore_smoke.py > artifacts/postgres-restore-target.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          original = json.loads(Path('artifacts/postgres-restore-source.json').read_text())
+          restored = json.loads(Path('artifacts/postgres-restore-target.json').read_text())
+          assert original['status'] == restored['status'] == 'passed'
+          assert original['legacy_contents_preserved'] is True
+          assert original['fingerprint'] == restored['fingerprint']
+          report = {
+              'status': 'passed',
+              'tables_compared': len(original['fingerprint']['tables']),
+              'legacy_records_preserved': True,
+              'migration_actions': original['migration_actions'],
+              'all_restored_rows_equal': True,
+              'provider_calls': 0,
+          }
+          Path('artifacts/postgres-backup-restore.json').write_text(json.dumps(report, indent=2))
+          print(json.dumps(report))
+          PY
       - name: Start optional worker without external discovery
         run: |
           docker compose --profile automation run --build --rm --no-deps -e MODSAGE_REFRESH_ENABLED=false worker python -m modsage.cli worker --once
       - name: Container diagnostics
         if: failure()
         run: docker compose logs --no-color
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deployment-test-results
+          path: |
+            artifacts/local-deployment.json
+            artifacts/postgres-restore-source.json
+            artifacts/postgres-restore-target.json
+            artifacts/postgres-backup-restore.json
       - name: Clean up isolated stack
         if: always()
         run: docker compose down --volumes
